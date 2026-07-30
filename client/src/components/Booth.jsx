@@ -42,7 +42,8 @@ export default function Booth({
   sendFrameSelection,
   startCountdown,
   resetSession,
-  onPhotosComplete
+  onPhotosComplete,
+  startVideoCall
 }) {
   const localVideoRef = useRef(null);
   const remoteVideoRef = useRef(null);
@@ -53,6 +54,12 @@ export default function Booth({
   const [selectedFilter, setSelectedFilter] = useState('filter-normal');
   const [selectedFrame, setSelectedFrame] = useState('frame-classic-white');
   const [statusMessage, setStatusMessage] = useState('Tekan "Mulai Foto" untuk memulai sesi 4 pose.');
+
+  // Trigger WebRTC call once both users are in the booth (guarantees local tracks are ready)
+  useEffect(() => {
+    console.log('Booth mounted, starting video call...');
+    startVideoCall();
+  }, [startVideoCall]);
 
   // Set video sources
   useEffect(() => {

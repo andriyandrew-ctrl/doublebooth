@@ -35,7 +35,8 @@ export default function App() {
     sendPreviewFrame,
     sendFilterSelection,
     sendFrameSelection,
-    resetSession
+    resetSession,
+    startVideoCall
   } = useWebRTC();
 
   const [appState, setAppState] = useState('LOBBY'); // LOBBY, SETUP, BOOTH, GALLERY
@@ -174,6 +175,7 @@ export default function App() {
             startCountdown={startCountdown}
             resetSession={resetSession}
             onPhotosComplete={handlePhotosComplete}
+            startVideoCall={startVideoCall}
           />
         )}
 

@@ -90,7 +90,7 @@ export default function useWebRTC() {
 
     newSocket.on('peer-joined', ({ users }) => {
       setUsers(users);
-      initiateCall();
+      // Wait to initiate WebRTC call until both enter the Booth (cameras ready)
     });
 
     newSocket.on('users-updated', ({ users }) => {
@@ -278,6 +278,18 @@ export default function useWebRTC() {
     }
   }, [createPeerConnection, roomCode]);
 
+  // Delayed initiation: triggered when Booth mounts to guarantee local camera tracks exist on both sides
+  const startVideoCall = useCallback(() => {
+    const isHost = users[0] && socketRef.current && socketRef.current.id === users[0].id;
+    if (isHost) {
+      console.log('Host is initiating WebRTC call...');
+      initiateCall();
+    } else {
+      console.log('Guest is preparing WebRTC peer connection...');
+      createPeerConnection();
+    }
+  }, [initiateCall, createPeerConnection, users]);
+
   // Lobby actions
   const createRoom = useCallback((nickname) => {
     if (socketRef.current && nickname) {
@@ -387,6 +399,7 @@ export default function useWebRTC() {
     sendPreviewFrame,
     sendFilterSelection,
     sendFrameSelection,
-    resetSession
+    resetSession,
+    startVideoCall
   };
 }
