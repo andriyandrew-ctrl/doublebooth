@@ -40,6 +40,9 @@ export default function useWebRTC() {
   // Selected overlays synced
   const [peerFilter, setPeerFilter] = useState('');
   const [peerFrame, setPeerFrame] = useState('');
+  
+  // WebRTC Fallback socket-based frame preview
+  const [remotePreviewFrame, setRemotePreviewFrame] = useState(null);
 
   const peerConnectionRef = useRef(null);
   const localStreamRef = useRef(null);
@@ -97,6 +100,7 @@ export default function useWebRTC() {
     newSocket.on('peer-left', ({ users }) => {
       setUsers(users);
       setRemoteStream(null);
+      setRemotePreviewFrame(null);
       setConnectionState('disconnected');
       setPeerPhotos({});
       if (peerConnectionRef.current) {
@@ -141,6 +145,10 @@ export default function useWebRTC() {
       }));
     });
 
+    newSocket.on('peer-preview-frame-shared', ({ dataUrl }) => {
+      setRemotePreviewFrame(dataUrl);
+    });
+
     newSocket.on('peer-filter-selected', ({ filterClass }) => {
       setPeerFilter(filterClass);
     });
@@ -151,6 +159,7 @@ export default function useWebRTC() {
 
     newSocket.on('session-reset', () => {
       setPeerPhotos({});
+      setRemotePreviewFrame(null);
       setIsCountdownRunning(false);
       setActivePhotoIndex(-1);
       setFlashActive(false);
@@ -326,6 +335,12 @@ export default function useWebRTC() {
     }
   }, [roomCode]);
 
+  const sendPreviewFrame = useCallback((dataUrl) => {
+    if (socketRef.current && roomCode) {
+      socketRef.current.emit('share-preview-frame', { roomId: roomCode, dataUrl });
+    }
+  }, [roomCode]);
+
   const sendFilterSelection = useCallback((filterClass) => {
     if (socketRef.current && roomCode) {
       socketRef.current.emit('select-filter', { roomId: roomCode, filterClass });
@@ -352,6 +367,7 @@ export default function useWebRTC() {
     remoteStream,
     connectionState,
     peerPhotos,
+    remotePreviewFrame,
     isCountdownRunning,
     setIsCountdownRunning,
     activePhotoIndex,
@@ -368,6 +384,7 @@ export default function useWebRTC() {
     toggleReady,
     startCountdown,
     shareCapturedPhoto,
+    sendPreviewFrame,
     sendFilterSelection,
     sendFrameSelection,
     resetSession

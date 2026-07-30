@@ -3,11 +3,14 @@ import { Download, Printer, RefreshCw, Wand2, Frame, Heart } from 'lucide-react'
 
 const POST_FILTERS = [
   { id: 'normal', name: 'Original', filter: 'none' },
-  { id: 'vintage-warm', name: 'Vintage Warm', filter: 'sepia(0.25) contrast(1.1) saturate(1.35) hue-rotate(-8deg)' },
-  { id: 'retro-grayscale', name: 'Retro B&W', filter: 'grayscale(100%) contrast(1.1) brightness(0.95)' },
-  { id: 'sepia', name: 'Sepia Retro', filter: 'sepia(100%) contrast(1.15) brightness(0.95)' },
-  { id: 'cyberpunk-cyan', name: 'Cyber Cyan', filter: 'hue-rotate(185deg) saturate(1.7) contrast(1.05)' },
-  { id: 'high-contrast-bw', name: 'Noir B&W', filter: 'grayscale(100%) contrast(1.75) brightness(0.85)' }
+  { id: 'vintage-lomo', name: 'Lomo Retro', filter: 'sepia(0.3) contrast(1.3) saturate(1.6) hue-rotate(-12deg) brightness(0.95)' },
+  { id: 'vintage-warm', name: 'Vintage Warm', filter: 'sepia(0.35) contrast(1.2) saturate(1.4) hue-rotate(-10deg) brightness(0.95)' },
+  { id: 'retro-grayscale', name: 'Classic B&W', filter: 'grayscale(100%) contrast(1.3) brightness(0.9)' },
+  { id: 'cyberpunk-cyan', name: 'Cyber Neon', filter: 'hue-rotate(180deg) saturate(2) contrast(1.1) brightness(0.95)' },
+  { id: 'y2k-acid', name: 'Y2K Acid', filter: 'hue-rotate(90deg) saturate(1.8) contrast(1.3) brightness(0.9)' },
+  { id: 'pastel-dream', name: 'Pastel Dream', filter: 'saturate(1.5) hue-rotate(130deg) brightness(1.1) contrast(0.9)' },
+  { id: 'tokyo-drift', name: 'Tokyo Cool', filter: 'hue-rotate(190deg) saturate(1.4) contrast(1.25) brightness(0.9)' },
+  { id: 'high-contrast-bw', name: 'Noir B&W', filter: 'grayscale(100%) contrast(1.9) brightness(0.8)' }
 ];
 
 const FRAMES = [
@@ -103,36 +106,105 @@ export default function Gallery({ photoData, resetSession }) {
 
     // Frame-specific decorations
     if (selectedFrame === 'dark-retro') {
-      // Draw grid
-      ctx.strokeStyle = 'rgba(0, 240, 255, 0.1)';
-      ctx.lineWidth = 1;
-      for (let x = 0; x < canvasW; x += 30) {
-        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvasH); ctx.stroke();
+      // 1. Draw filmstrip sprocket holes (horizontal cutouts)
+      ctx.fillStyle = '#0b0914'; // background color of web, makes holes look cut-out!
+      for (let sy = 15; sy < canvasH; sy += 45) {
+        // Left sprocket hole
+        ctx.fillRect(14, sy, 12, 20);
+        // Right sprocket hole
+        ctx.fillRect(canvasW - 26, sy, 12, 20);
       }
-      for (let y = 0; y < canvasH; y += 30) {
-        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvasW, y); ctx.stroke();
+
+      // 2. Draw yellow frame numbers next to photos
+      ctx.fillStyle = '#eab308'; // film amber
+      ctx.font = 'bold 11px monospace';
+      for (let i = 0; i < 4; i++) {
+        const y = paddingY + i * (photoH + gapY);
+        ctx.fillText(`KODAK 400TX`, 12, y + 25);
+        ctx.fillText(`0${i+1}`, 15, y + 45);
+        ctx.fillText(`▶ ${i+1}A`, 12, y + 280);
+        
+        ctx.fillText(`KODAK 400TX`, canvasW - 25, y + 25);
+        ctx.fillText(`0${i+1}`, canvasW - 22, y + 45);
+        ctx.fillText(`▶ ${i+1}A`, canvasW - 25, y + 280);
       }
     } else if (selectedFrame === 'pastel-pink') {
-      // Draw some hearts in backgrounds
-      ctx.fillStyle = 'rgba(225, 29, 72, 0.15)';
-      ctx.font = '24px Arial';
-      ctx.fillText('♥', 20, 30);
-      ctx.fillText('♥', canvasW - 35, 60);
-      ctx.fillText('♥', 15, canvasH - footerH);
-      ctx.fillText('♥', canvasW - 40, canvasH - 30);
+      // Draw actual heart vectors on margins
+      ctx.fillStyle = '#f43f5e';
+      const drawHeart = (x, y, size) => {
+        ctx.beginPath();
+        ctx.moveTo(x, y + size / 4);
+        ctx.quadraticCurveTo(x, y, x + size / 2, y);
+        ctx.quadraticCurveTo(x + size, y, x + size, y + size / 3);
+        ctx.quadraticCurveTo(x + size, y + size * 2/3, x + size / 2, y + size);
+        ctx.quadraticCurveTo(x, y + size * 2/3, x, y + size / 3);
+        ctx.quadraticCurveTo(x, y, x, y + size / 4);
+        ctx.closePath();
+        ctx.fill();
+      };
+      
+      drawHeart(12, 20, 20);
+      drawHeart(canvasW - 32, 50, 16);
+      drawHeart(10, 320, 18);
+      drawHeart(canvasW - 28, 480, 22);
+      drawHeart(14, 750, 24);
+      drawHeart(canvasW - 30, 950, 18);
+      drawHeart(15, canvasH - footerH, 20);
     } else if (selectedFrame === 'cute-stickers') {
-      // Draw little stars
-      ctx.fillStyle = '#c084fc';
-      ctx.font = '20px Arial';
-      ctx.fillText('★', 15, 80);
-      ctx.fillText('★', canvasW - 30, 240);
-      ctx.fillText('★', 20, 600);
-      ctx.fillText('★', canvasW - 35, 900);
+      // Draw 4-point sparkle star vectors on margins
+      const drawSparkle = (x, y, size) => {
+        ctx.beginPath();
+        ctx.moveTo(x, y - size);
+        ctx.quadraticCurveTo(x, y, x + size, y);
+        ctx.quadraticCurveTo(x, y, x, y + size);
+        ctx.quadraticCurveTo(x, y, x - size, y);
+        ctx.quadraticCurveTo(x, y, x, y - size);
+        ctx.closePath();
+        ctx.fillStyle = '#f5f3ff';
+        ctx.fill();
+        ctx.strokeStyle = '#a855f7';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+      };
+      
+      drawSparkle(15, 60, 10);
+      drawSparkle(canvasW - 25, 120, 8);
+      drawSparkle(15, 450, 12);
+      drawSparkle(canvasW - 22, 600, 9);
+      drawSparkle(18, 900, 14);
+      drawSparkle(canvasW - 25, 1100, 10);
     } else if (selectedFrame === 'cyberpunk') {
-      // Draw neon bars
-      ctx.fillStyle = '#ff007f';
+      // Draw warning stripes on left/right borders
+      ctx.fillStyle = '#facc15'; // cyber yellow
       ctx.fillRect(0, 0, 10, canvasH);
       ctx.fillRect(canvasW - 10, 0, 10, canvasH);
+
+      // Draw cyber black warning slashes
+      ctx.fillStyle = '#000000';
+      for (let sy = 0; sy < canvasH; sy += 30) {
+        ctx.beginPath();
+        ctx.moveTo(0, sy);
+        ctx.lineTo(10, sy + 10);
+        ctx.lineTo(10, sy + 20);
+        ctx.lineTo(0, sy + 10);
+        ctx.closePath();
+        ctx.fill();
+        
+        ctx.beginPath();
+        ctx.moveTo(canvasW - 10, sy);
+        ctx.lineTo(canvasW, sy + 10);
+        ctx.lineTo(canvasW, sy + 20);
+        ctx.lineTo(canvasW - 10, sy + 10);
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      // Draw retro grid pattern in background
+      ctx.strokeStyle = 'rgba(255, 0, 127, 0.12)';
+      ctx.lineWidth = 1.5;
+      for (let y = 10; y < canvasH; y += 40) {
+        ctx.beginPath(); ctx.moveTo(10, y); ctx.lineTo(canvasW - 10, y); ctx.stroke();
+      }
     }
 
     // 2. Draw 4 Pose Rows (Photo A & Photo B side-by-side)

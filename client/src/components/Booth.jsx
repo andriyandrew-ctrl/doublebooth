@@ -2,13 +2,15 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Camera, RefreshCw, Wand2, Frame, CheckCircle } from 'lucide-react';
 
 const FILTERS = [
-  { id: 'normal', name: 'Normal', class: 'filter-normal' },
+  { id: 'normal', name: 'Original', class: 'filter-normal' },
+  { id: 'vintage-lomo', name: 'Lomo Retro', class: 'filter-vintage-lomo' },
   { id: 'vintage-warm', name: 'Vintage Warm', class: 'filter-vintage-warm' },
-  { id: 'retro-grayscale', name: 'Vintage B&W', class: 'filter-retro-grayscale' },
-  { id: 'sepia', name: 'Sepia Retro', class: 'filter-sepia' },
-  { id: 'cyberpunk-cyan', name: 'Cyber Blue', class: 'filter-cyberpunk-cyan' },
-  { id: 'high-contrast-bw', name: 'Noir B&W', class: 'filter-high-contrast-bw' },
-  { id: 'neon-pink', name: 'Neon Pink', class: 'filter-neon-pink' }
+  { id: 'retro-grayscale', name: 'Classic B&W', class: 'filter-retro-grayscale' },
+  { id: 'cyberpunk-cyan', name: 'Cyber Neon', class: 'filter-cyberpunk-cyan' },
+  { id: 'y2k-acid', name: 'Y2K Acid Green', class: 'filter-y2k-acid' },
+  { id: 'pastel-dream', name: 'Pastel Dream', class: 'filter-pastel-dream' },
+  { id: 'tokyo-drift', name: 'Tokyo Cool', class: 'filter-tokyo-drift' },
+  { id: 'high-contrast-bw', name: 'Noir B&W', class: 'filter-high-contrast-bw' }
 ];
 
 const FRAMES = [
@@ -25,6 +27,7 @@ export default function Booth({
   remoteStream,
   connectionState,
   peerPhotos,
+  remotePreviewFrame,
   isCountdownRunning,
   setIsCountdownRunning,
   activePhotoIndex,
@@ -34,6 +37,7 @@ export default function Booth({
   peerFilter,
   peerFrame,
   shareCapturedPhoto,
+  sendPreviewFrame,
   sendFilterSelection,
   sendFrameSelection,
   startCountdown,
@@ -56,6 +60,31 @@ export default function Booth({
       localVideoRef.current.srcObject = localStream;
     }
   }, [localStream]);
+
+  // Periodically capture and send low-resolution preview frame (fallback)
+  useEffect(() => {
+    if (!localStream || isCountdownRunning) return;
+
+    const interval = setInterval(() => {
+      const video = localVideoRef.current;
+      if (!video || video.readyState < 2) return;
+
+      const canvas = document.createElement('canvas');
+      canvas.width = 160;
+      canvas.height = 120;
+      const ctx = canvas.getContext('2d');
+
+      // Draw mirrored local video
+      ctx.translate(canvas.width, 0);
+      ctx.scale(-1, 1);
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.22); // Highly compressed, ~2KB
+      sendPreviewFrame(dataUrl);
+    }, 800);
+
+    return () => clearInterval(interval);
+  }, [localStream, sendPreviewFrame, isCountdownRunning]);
 
   useEffect(() => {
     if (remoteVideoRef.current && remoteStream) {
@@ -203,6 +232,23 @@ export default function Booth({
               playsInline
               muted
             />
+            {/* Viewfinder Camera HUD Overlay */}
+            <div className="camera-hud">
+              <div className="hud-top">
+                <div className="hud-battery">🔋 100%</div>
+                <div className="hud-rec">
+                  <span className="rec-dot" />
+                  REC
+                </div>
+              </div>
+              <div className="hud-center">
+                <div className="focus-cross" />
+              </div>
+              <div className="hud-bottom">
+                <div className="hud-iso">ISO 200</div>
+                <div className="hud-time">1080P 30FPS</div>
+              </div>
+            </div>
             {isCountdownRunning && activePhotoIndex !== -1 && countdownNumber !== null && (
               <div className="countdown-overlay">
                 <div className="countdown-number">{countdownNumber}</div>
@@ -225,6 +271,19 @@ export default function Booth({
                 autoPlay
                 playsInline
               />
+            ) : remotePreviewFrame ? (
+              <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+                <img
+                  src={remotePreviewFrame}
+                  className={`video-feed ${selectedFilter}`}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  alt="Remote Preview"
+                />
+                <div style={{ position: 'absolute', bottom: '1rem', right: '1rem', background: 'rgba(16, 185, 129, 0.85)', backdropFilter: 'blur(4px)', padding: '0.25rem 0.6rem', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.3rem', border: '1px solid rgba(255,255,255,0.1)', zIndex: 10 }}>
+                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#fff', animation: 'hud-pulse 1s infinite' }} />
+                  Sync Stream
+                </div>
+              </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: '1rem', background: '#080710', color: 'var(--text-secondary)' }}>
                 <RefreshCw className="animate-spin" size={32} style={{ color: 'var(--secondary)' }} />
@@ -236,6 +295,23 @@ export default function Booth({
                 )}
               </div>
             )}
+            {/* Viewfinder Camera HUD Overlay */}
+            <div className="camera-hud">
+              <div className="hud-top">
+                <div className="hud-battery">🔋 100%</div>
+                <div className="hud-rec">
+                  <span className="rec-dot" />
+                  REC
+                </div>
+              </div>
+              <div className="hud-center">
+                <div className="focus-cross" />
+              </div>
+              <div className="hud-bottom">
+                <div className="hud-iso">ISO 200</div>
+                <div className="hud-time">1080P 30FPS</div>
+              </div>
+            </div>
             {isCountdownRunning && activePhotoIndex !== -1 && countdownNumber !== null && (
               <div className="countdown-overlay">
                 <div className="countdown-number">{countdownNumber}</div>

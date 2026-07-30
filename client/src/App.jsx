@@ -15,6 +15,7 @@ export default function App() {
     remoteStream,
     connectionState,
     peerPhotos,
+    remotePreviewFrame,
     isCountdownRunning,
     setIsCountdownRunning,
     activePhotoIndex,
@@ -31,6 +32,7 @@ export default function App() {
     toggleReady,
     startCountdown,
     shareCapturedPhoto,
+    sendPreviewFrame,
     sendFilterSelection,
     sendFrameSelection,
     resetSession
@@ -156,6 +158,7 @@ export default function App() {
             remoteStream={remoteStream}
             connectionState={connectionState}
             peerPhotos={peerPhotos}
+            remotePreviewFrame={remotePreviewFrame}
             isCountdownRunning={isCountdownRunning}
             setIsCountdownRunning={setIsCountdownRunning}
             activePhotoIndex={activePhotoIndex}
@@ -165,6 +168,7 @@ export default function App() {
             peerFilter={peerFilter}
             peerFrame={peerFrame}
             shareCapturedPhoto={shareCapturedPhoto}
+            sendPreviewFrame={sendPreviewFrame}
             sendFilterSelection={sendFilterSelection}
             sendFrameSelection={sendFrameSelection}
             startCountdown={startCountdown}

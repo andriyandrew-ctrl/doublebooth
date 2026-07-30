@@ -109,6 +109,12 @@ io.on('connection', (socket) => {
     }
   });
 
+  // 2.7 PREVIEW FRAME SYNC (fallback for WebRTC camera stream)
+  socket.on('share-preview-frame', ({ roomId, dataUrl }) => {
+    if (!rooms.has(roomId)) return;
+    socket.to(roomId).emit('peer-preview-frame-shared', { dataUrl });
+  });
+
   // 3. READY STATUS
   socket.on('set-ready', ({ roomId, ready }) => {
     if (!rooms.has(roomId)) return;
