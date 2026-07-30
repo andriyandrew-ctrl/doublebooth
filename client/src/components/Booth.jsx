@@ -77,8 +77,8 @@ export default function Booth({
       if (!video || video.readyState < 2) return;
 
       const canvas = document.createElement('canvas');
-      canvas.width = 160;
-      canvas.height = 120;
+      canvas.width = 640;
+      canvas.height = 480;
       const ctx = canvas.getContext('2d');
 
       // Draw mirrored local video
@@ -86,9 +86,9 @@ export default function Booth({
       ctx.scale(-1, 1);
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-      const dataUrl = canvas.toDataURL('image/jpeg', 0.22); // Highly compressed, ~2KB
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.70); // High quality fallback, ~30-40KB
       sendPreviewFrame(dataUrl);
-    }, 800);
+    }, 400); // 2.5 FPS for a smoother, clearer feed
 
     return () => clearInterval(interval);
   }, [localStream, sendPreviewFrame, isCountdownRunning]);
