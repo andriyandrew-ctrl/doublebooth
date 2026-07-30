@@ -44,21 +44,40 @@ export default function useWebRTC() {
 
     newSocket.on('connect', () => {
       console.log('Connected to signaling server');
+      const currentRoomCode = socketRef.current?.roomId;
+      const currentNickname = socketRef.current?.nickname;
+      if (currentRoomCode && currentNickname) {
+        console.log(`Rejoining room ${currentRoomCode} as ${currentNickname}`);
+        newSocket.emit('rejoin-room', { roomId: currentRoomCode, name: currentNickname });
+      }
     });
 
     newSocket.on('room-created', ({ roomId, users }) => {
       setRoomCode(roomId);
       setUsers(users);
+      if (socketRef.current) {
+        socketRef.current.roomId = roomId;
+      }
     });
 
     newSocket.on('room-joined', ({ roomId, users }) => {
       setRoomCode(roomId);
       setUsers(users);
+      if (socketRef.current) {
+        socketRef.current.roomId = roomId;
+      }
+    });
+
+    newSocket.on('room-rejoined', ({ roomId, users }) => {
+      setRoomCode(roomId);
+      setUsers(users);
+      if (socketRef.current) {
+        socketRef.current.roomId = roomId;
+      }
     });
 
     newSocket.on('peer-joined', ({ users }) => {
       setUsers(users);
-      // As the room creator (User A), initiate WebRTC call
       initiateCall();
     });
 
@@ -244,12 +263,15 @@ export default function useWebRTC() {
   // Lobby actions
   const createRoom = useCallback((nickname) => {
     if (socketRef.current && nickname) {
+      socketRef.current.nickname = nickname;
       socketRef.current.emit('create-room', { name: nickname });
     }
   }, []);
 
   const joinRoom = useCallback((code, nickname) => {
     if (socketRef.current && code && nickname) {
+      socketRef.current.nickname = nickname;
+      socketRef.current.roomId = code.toUpperCase();
       socketRef.current.emit('join-room', { roomId: code.toUpperCase(), name: nickname });
     }
   }, []);
@@ -257,6 +279,8 @@ export default function useWebRTC() {
   const leaveRoom = useCallback(() => {
     if (socketRef.current && roomCode) {
       socketRef.current.emit('leave-room', { roomId: roomCode });
+      socketRef.current.roomId = null;
+      socketRef.current.nickname = null;
     }
     setRoomCode('');
     setUsers([]);

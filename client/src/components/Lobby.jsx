@@ -3,7 +3,10 @@ import { Camera, Plus, LogIn, Sparkles } from 'lucide-react';
 
 export default function Lobby({ createRoom, joinRoom }) {
   const [nickname, setNickname] = useState('');
-  const [roomCodeInput, setRoomCodeInput] = useState('');
+  const [roomCodeInput, setRoomCodeInput] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('room')?.toUpperCase() || '';
+  });
 
   const handleCreate = (e) => {
     e.preventDefault();

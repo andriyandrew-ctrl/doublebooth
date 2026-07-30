@@ -84,6 +84,31 @@ io.on('connection', (socket) => {
     console.log(`User ${name} (${socket.id}) joined Room ${code}`);
   });
 
+  // 2.5 REJOIN ROOM (reconnect resiliency)
+  socket.on('rejoin-room', ({ roomId, name }) => {
+    const code = roomId.toUpperCase();
+    if (!rooms.has(code)) {
+      // Recreate room if deleted during server sleep/restart
+      const room = {
+        id: code,
+        users: [{ id: socket.id, name, ready: false }]
+      };
+      rooms.set(code, room);
+      socket.join(code);
+      socket.emit('room-rejoined', { roomId: code, users: room.users });
+      console.log(`Room ${code} recreated on-the-fly for rejoining user ${name} (${socket.id})`);
+    } else {
+      const room = rooms.get(code);
+      // Remove any stale entries with the same nickname to prevent duplicates
+      room.users = room.users.filter(u => u.name !== name);
+      room.users.push({ id: socket.id, name, ready: false });
+      socket.join(code);
+      socket.emit('room-rejoined', { roomId: code, users: room.users });
+      io.to(code).emit('users-updated', { users: room.users });
+      console.log(`User ${name} (${socket.id}) reassociated with Room ${code}`);
+    }
+  });
+
   // 3. READY STATUS
   socket.on('set-ready', ({ roomId, ready }) => {
     if (!rooms.has(roomId)) return;
