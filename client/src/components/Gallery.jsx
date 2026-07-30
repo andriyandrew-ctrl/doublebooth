@@ -25,11 +25,11 @@ export default function Gallery({ photoData, resetSession }) {
   const [customText, setCustomText] = useState('Our Sweet Memories');
   const [imagesLoaded, setImagesLoaded] = useState(false);
 
-  const localPhotos = photoData.local;
-  const peerPhotos = photoData.peer;
+  const photoAPhotos = photoData.photoA;
+  const photoBPhotos = photoData.photoB;
 
   // Track image elements once loaded
-  const imageElementsRef = useRef({ local: {}, peer: {} });
+  const imageElementsRef = useRef({ photoA: {}, photoB: {} });
 
   // Set initial filter and frame from booth settings
   useEffect(() => {
@@ -46,33 +46,33 @@ export default function Gallery({ photoData, resetSession }) {
   // Pre-load all images onto HTML Image elements
   useEffect(() => {
     const promises = [];
-    const localImgs = {};
-    const peerImgs = {};
+    const photoAImgs = {};
+    const photoBImgs = {};
 
     for (let i = 0; i < 4; i++) {
-      const localSrc = localPhotos[i];
-      const peerSrc = peerPhotos[i];
+      const srcA = photoAPhotos?.[i];
+      const srcB = photoBPhotos?.[i];
 
-      if (localSrc) {
+      if (srcA) {
         const img = new Image();
-        img.src = localSrc;
-        localImgs[i] = img;
+        img.src = srcA;
+        photoAImgs[i] = img;
         promises.push(new Promise((resolve) => { img.onload = resolve; }));
       }
-      if (peerSrc) {
+      if (srcB) {
         const img = new Image();
-        img.src = peerSrc;
-        peerImgs[i] = img;
+        img.src = srcB;
+        photoBImgs[i] = img;
         promises.push(new Promise((resolve) => { img.onload = resolve; }));
       }
     }
 
     Promise.all(promises).then(() => {
-      imageElementsRef.current = { local: localImgs, peer: peerImgs };
+      imageElementsRef.current = { photoA: photoAImgs, photoB: photoBImgs };
       setImagesLoaded(true);
       triggerConfetti();
     });
-  }, [localPhotos, peerPhotos]);
+  }, [photoAPhotos, photoBPhotos]);
 
   // Render Photobooth Strip onto Canvas
   const drawStrip = () => {
@@ -136,7 +136,7 @@ export default function Gallery({ photoData, resetSession }) {
     }
 
     // 2. Draw 4 Pose Rows (Photo A & Photo B side-by-side)
-    const { local: localImgs, peer: peerImgs } = imageElementsRef.current;
+    const { photoA: photoAImgs, photoB: photoBImgs } = imageElementsRef.current;
 
     for (let i = 0; i < 4; i++) {
       const y = paddingY + i * (photoH + gapY);
@@ -147,10 +147,10 @@ export default function Gallery({ photoData, resetSession }) {
       const xB = paddingX + photoW + gapX;
 
       // Draw Photo A
-      if (localImgs[i]) {
+      if (photoAImgs[i]) {
         ctx.save();
         ctx.filter = selectedFilter;
-        ctx.drawImage(localImgs[i], xA, y, photoW, photoH);
+        ctx.drawImage(photoAImgs[i], xA, y, photoW, photoH);
         ctx.restore();
         
         // Draw frame border
@@ -160,10 +160,10 @@ export default function Gallery({ photoData, resetSession }) {
       }
 
       // Draw Photo B
-      if (peerImgs[i]) {
+      if (photoBImgs[i]) {
         ctx.save();
         ctx.filter = selectedFilter;
-        ctx.drawImage(peerImgs[i], xB, y, photoW, photoH);
+        ctx.drawImage(photoBImgs[i], xB, y, photoW, photoH);
         ctx.restore();
 
         // Draw frame border
