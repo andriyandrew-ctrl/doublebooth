@@ -191,7 +191,7 @@ export default function Booth({
     // Reset transform
     ctx.setTransform(1, 0, 0, 1, 0, 0);
 
-    const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
     
     // Save locally
     setLocalPhotos(prev => {

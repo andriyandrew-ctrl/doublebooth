@@ -23,6 +23,34 @@ const SOCKET_URL = window.location.port === '5173'
   ? `http://${window.location.hostname}:5000`
   : window.location.origin;
 
+// Helper to modify SDP and force WebRTC to use a higher video bitrate (e.g. 2.5 Mbps instead of ~500 Kbps)
+function setVideoMaxBitrate(sdp, bitrate) {
+  const lines = sdp.split('\r\n');
+  let videoLineIndex = -1;
+  for (let i = 0; i < lines.length; i++) {
+    if (lines[i].indexOf('m=video') === 0) {
+      videoLineIndex = i;
+      break;
+    }
+  }
+  if (videoLineIndex === -1) return sdp;
+
+  // Insert b=AS:bitrate right after the m=video line (if not already present)
+  let foundBandwidth = false;
+  for (let i = videoLineIndex + 1; i < lines.length; i++) {
+    if (lines[i].indexOf('m=') === 0) break; // Reached next media section
+    if (lines[i].indexOf('b=AS:') === 0 || lines[i].indexOf('b=TIAS:') === 0) {
+      lines[i] = `b=AS:${bitrate}`;
+      foundBandwidth = true;
+      break;
+    }
+  }
+  if (!foundBandwidth) {
+    lines.splice(videoLineIndex + 1, 0, `b=AS:${bitrate}`);
+  }
+  return lines.join('\r\n');
+}
+
 export default function useWebRTC() {
   const [socket, setSocket] = useState(null);
   const [roomCode, setRoomCode] = useState('');
@@ -121,6 +149,7 @@ export default function useWebRTC() {
         if (signal.type === 'offer') {
           await pc.setRemoteDescription(new RTCSessionDescription(signal));
           const answer = await pc.createAnswer();
+          answer.sdp = setVideoMaxBitrate(answer.sdp, 2500); // Force 2.5 Mbps video quality
           await pc.setLocalDescription(answer);
           newSocket.emit('webrtc-signal', { roomId: roomCode || newSocket.roomId, signal: answer });
         } else if (signal.type === 'answer') {
@@ -190,8 +219,8 @@ export default function useWebRTC() {
       
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
-          width: { ideal: 640 },
-          height: { ideal: 480 },
+          width: { min: 640, ideal: 1280, max: 1920 },
+          height: { min: 480, ideal: 720, max: 1080 },
           facingMode: 'user'
         },
         audio: false
@@ -265,6 +294,7 @@ export default function useWebRTC() {
     try {
       const pc = createPeerConnection();
       const offer = await pc.createOffer();
+      offer.sdp = setVideoMaxBitrate(offer.sdp, 2500); // Force 2.5 Mbps video quality
       await pc.setLocalDescription(offer);
 
       if (socketRef.current && roomCode) {
