@@ -425,7 +425,7 @@ body {
 .booth-layout {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 8rem);
+  min-height: calc(100vh - 8rem);
   max-width: 1000px;
   margin: 0 auto;
   gap: 1.5rem;
@@ -441,6 +441,20 @@ body {
   justify-content: center;
   align-items: center;
   border: 4px solid var(--card-border);
+  min-height: 480px;
+}
+
+.dual-camera-container {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  flex-direction: row;
+}
+
+@media (max-width: 768px) {
+  .dual-camera-container {
+    flex-direction: column;
+  }
 }
 
 .booth-controls-section {

@@ -179,10 +179,12 @@ export default function App() {
         )}
 
         {appState === 'GALLERY' && capturedPhotos && (
-          <Gallery
-            photoData={{ photoA: capturedPhotos.photoA, photoB: capturedPhotos.photoB }}
+          <Gallery 
+            photoData={capturedPhotos} 
             resetSession={resetSession}
             initialConfig={boothConfig}
+            socket={socket}
+            roomCode={roomCode}
           />
         )}
       </main>

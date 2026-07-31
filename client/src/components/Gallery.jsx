@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Download, Printer, RefreshCw, Wand2, Frame, Palette, LayoutGrid } from 'lucide-react';
 import { LAYOUTS, BACKGROUNDS, POST_FILTERS, FRAMES } from '../constants';
 
-export default function Gallery({ photoData, resetSession, initialConfig }) {
+export default function Gallery({ photoData, resetSession, initialConfig, socket, roomCode }) {
   const canvasRef = useRef(null);
   const [selectedLayout, setSelectedLayout] = useState(initialConfig?.layout || '1x4');
   const [selectedBg, setSelectedBg] = useState('bg-white');
@@ -28,6 +28,44 @@ export default function Gallery({ photoData, resetSession, initialConfig }) {
       if (matched) setSelectedFrame(matched.id);
     }
   }, [photoData]);
+
+  // Sync Gallery State
+  useEffect(() => {
+    if (!socket || !roomCode) return;
+    
+    const handleGalleryUpdated = (config) => {
+      if (config.layout) setSelectedLayout(config.layout);
+      if (config.bg) setSelectedBg(config.bg);
+      if (config.filter) setSelectedFilter(config.filter);
+      if (config.frame) setSelectedFrame(config.frame);
+      if (config.text !== undefined) setCustomText(config.text);
+    };
+
+    socket.on('gallery-updated', handleGalleryUpdated);
+    return () => socket.off('gallery-updated', handleGalleryUpdated);
+  }, [socket, roomCode]);
+
+  const emitGalleryUpdate = (updates) => {
+    if (socket && roomCode && roomCode !== 'SINGLE') {
+      socket.emit('update-gallery', { 
+        roomId: roomCode, 
+        config: { 
+          layout: selectedLayout,
+          bg: selectedBg,
+          filter: selectedFilter,
+          frame: selectedFrame,
+          text: customText,
+          ...updates
+        } 
+      });
+    }
+  };
+
+  const handleLayoutChange = (val) => { setSelectedLayout(val); emitGalleryUpdate({ layout: val }); };
+  const handleBgChange = (val) => { setSelectedBg(val); emitGalleryUpdate({ bg: val }); };
+  const handleFilterChange = (val) => { setSelectedFilter(val); emitGalleryUpdate({ filter: val }); };
+  const handleFrameChange = (val) => { setSelectedFrame(val); emitGalleryUpdate({ frame: val }); };
+  const handleTextChange = (val) => { setCustomText(val); emitGalleryUpdate({ text: val }); };
 
   // Pre-load all images onto HTML Image elements
   useEffect(() => {
@@ -282,7 +320,7 @@ export default function Gallery({ photoData, resetSession, initialConfig }) {
               type="text"
               className="input-field"
               value={customText}
-              onChange={(e) => setCustomText(e.target.value)}
+              onChange={(e) => handleTextChange(e.target.value)}
               placeholder="Tulis pesan Anda..."
               maxLength={24}
             />
@@ -296,7 +334,7 @@ export default function Gallery({ photoData, resetSession, initialConfig }) {
                 <div
                   key={l.id}
                   className={`theme-pack-card ${selectedLayout === l.id ? 'selected' : ''}`}
-                  onClick={() => setSelectedLayout(l.id)}
+                  onClick={() => handleLayoutChange(l.id)}
                   style={{ padding: '0.75rem' }}
                 >
                   <div className="theme-pack-info">
@@ -332,7 +370,7 @@ export default function Gallery({ photoData, resetSession, initialConfig }) {
                 <div
                   key={f.id}
                   className={`theme-pack-card ${selectedFrame === f.id ? 'selected' : ''}`}
-                  onClick={() => setSelectedFrame(f.id)}
+                  onClick={() => handleFrameChange(f.id)}
                   style={{ padding: '0.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center' }}
                 >
                   <div className={`theme-preview-box ${f.id}`} style={{ width: '32px', height: '32px', marginRight: 0, marginBottom: '0.5rem', fontSize: '1rem' }}>
@@ -357,7 +395,9 @@ export default function Gallery({ photoData, resetSession, initialConfig }) {
                 <button
                   key={f.id}
                   className={`option-btn ${selectedFilter === f.filter ? 'selected' : ''}`}
-                  onClick={() => setSelectedFilter(f.filter)}
+                  onClick={() => handleFilterChange(f.filter)}
+                  title={f.name}
+                  aria-label={f.name}
                 >
                   {f.name}
                 </button>

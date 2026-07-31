@@ -148,6 +148,12 @@ io.on('connection', (socket) => {
     console.log(`User ${socket.id} shared photo index ${photoIndex} in Room ${roomId}`);
   });
 
+  // Sync Gallery choices
+  socket.on('update-gallery', ({ roomId, config }) => {
+    if (!rooms.has(roomId)) return;
+    socket.to(roomId).emit('gallery-updated', config);
+  });
+
   // Filter selection synchronization
   socket.on('select-filter', ({ roomId, filterClass }) => {
     if (!rooms.has(roomId)) return;
