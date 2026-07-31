@@ -245,6 +245,21 @@ export default function useWebRTC() {
     }
   }, []);
 
+  const replaceLocalStream = useCallback((newStream) => {
+    if (!newStream) return;
+    localStreamRef.current = newStream;
+    setLocalStream(newStream);
+    
+    // If peer connection exists, replace the track being sent
+    if (peerConnectionRef.current) {
+      const sender = peerConnectionRef.current.getSenders().find(s => s.track?.kind === 'video');
+      const videoTrack = newStream.getVideoTracks()[0];
+      if (sender && videoTrack) {
+        sender.replaceTrack(videoTrack);
+      }
+    }
+  }, []);
+
   // WebRTC - Create Peer Connection
   const createPeerConnection = useCallback(() => {
     if (peerConnectionRef.current) return peerConnectionRef.current;
@@ -322,6 +337,11 @@ export default function useWebRTC() {
 
   // Lobby actions
   const createRoom = useCallback((nickname) => {
+    if (nickname === 'SINGLE_MODE') {
+      setRoomCode('SINGLE');
+      setUsers([{ id: 'local', name: 'You (Single Mode)', ready: false }]);
+      return;
+    }
     if (socketRef.current && nickname) {
       socketRef.current.nickname = nickname;
       socketRef.current.emit('create-room', { name: nickname });
@@ -359,6 +379,10 @@ export default function useWebRTC() {
   }, [roomCode]);
 
   const toggleReady = useCallback((readyValue) => {
+    if (roomCode === 'SINGLE') {
+      setUsers(prev => [{ ...prev[0], ready: readyValue }]);
+      return;
+    }
     if (socketRef.current && roomCode) {
       socketRef.current.emit('set-ready', { roomId: roomCode, ready: readyValue });
     }
@@ -430,6 +454,7 @@ export default function useWebRTC() {
     sendFilterSelection,
     sendFrameSelection,
     resetSession,
-    startVideoCall
+    startVideoCall,
+    replaceLocalStream
   };
 }

@@ -1,5 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Camera, RefreshCw, Wand2, Frame, CheckCircle } from 'lucide-react';
+import { Camera, RefreshCw, Wand2, Frame, CheckCircle, Image as ImageIcon, Smile } from 'lucide-react';
+import useMediaPipe, { AR_FILTERS } from '../hooks/useMediaPipe';
+import { BACKGROUNDS } from '../constants';
 
 const FILTERS = [
   { id: 'normal', name: 'Original', class: 'filter-normal' },
@@ -13,13 +15,7 @@ const FILTERS = [
   { id: 'high-contrast-bw', name: 'Noir B&W', class: 'filter-high-contrast-bw' }
 ];
 
-const FRAMES = [
-  { id: 'classic-white', name: 'Classic White', class: 'frame-classic-white' },
-  { id: 'dark-retro', name: 'Dark Cyber', class: 'frame-dark-retro' },
-  { id: 'pastel-pink', name: 'Pastel Hearts', class: 'frame-pastel-pink' },
-  { id: 'cyberpunk', name: 'Cyber Punk', class: 'frame-cyberpunk' },
-  { id: 'cute-stickers', name: 'Cute Lavender', class: 'frame-cute-stickers' }
-];
+// We will use the ones from constants instead of declaring them here.
 
 export default function Booth({
   users,
@@ -43,7 +39,8 @@ export default function Booth({
   startCountdown,
   resetSession,
   onPhotosComplete,
-  startVideoCall
+  startVideoCall,
+  replaceLocalStream
 }) {
   const localVideoRef = useRef(null);
   const remoteVideoRef = useRef(null);
@@ -51,9 +48,28 @@ export default function Booth({
 
   const [localPhotos, setLocalPhotos] = useState({});
   const [countdownNumber, setCountdownNumber] = useState(null);
-  const [selectedFilter, setSelectedFilter] = useState('filter-normal');
-  const [selectedFrame, setSelectedFrame] = useState('frame-classic-white');
+  
+  // MediaPipe state
+  const [selectedBg, setSelectedBg] = useState('bg-none');
+  const [selectedArFilter, setSelectedArFilter] = useState('none');
+  
+  const { processedStream, isModelsLoaded } = useMediaPipe(localStream, selectedBg, selectedArFilter);
+
   const [statusMessage, setStatusMessage] = useState('Tekan "Mulai Foto" untuk memulai sesi 4 pose.');
+
+  // Render the processed stream instead of the raw webcam
+  useEffect(() => {
+    if (localVideoRef.current && processedStream) {
+      localVideoRef.current.srcObject = processedStream;
+    }
+  }, [processedStream]);
+
+  // Update the WebRTC outgoing stream with our processed stream
+  useEffect(() => {
+    if (processedStream) {
+      replaceLocalStream(processedStream);
+    }
+  }, [processedStream, replaceLocalStream]);
 
   // Trigger WebRTC call once both users are in the booth (guarantees local tracks are ready)
   useEffect(() => {
@@ -61,16 +77,11 @@ export default function Booth({
     startVideoCall();
   }, [startVideoCall]);
 
-  // Set video sources
-  useEffect(() => {
-    if (localVideoRef.current && localStream) {
-      localVideoRef.current.srcObject = localStream;
-    }
-  }, [localStream]);
+  // We rely on processedStream instead of localStream.
 
   // Periodically capture and send low-resolution preview frame (fallback)
   useEffect(() => {
-    if (!localStream || isCountdownRunning) return;
+    if (!processedStream || isCountdownRunning) return;
 
     const interval = setInterval(() => {
       const video = localVideoRef.current;
@@ -91,7 +102,7 @@ export default function Booth({
     }, 400); // 2.5 FPS for a smoother, clearer feed
 
     return () => clearInterval(interval);
-  }, [localStream, sendPreviewFrame, isCountdownRunning]);
+  }, [processedStream, sendPreviewFrame, isCountdownRunning]);
 
   useEffect(() => {
     if (remoteVideoRef.current && remoteStream) {
@@ -333,7 +344,7 @@ export default function Booth({
       </div>
 
       {/* Control panel */}
-      <div className="glass booth-controls">
+      <div className="glass booth-controls" style={{ display: 'flex', flexDirection: 'column', gap: '1rem', height: '100%' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
             <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)' }}>
@@ -343,15 +354,61 @@ export default function Booth({
               {statusMessage}
             </p>
           </div>
-          
-          <button
-            className="btn btn-primary"
+        </div>
+
+        <div className="panel-section glass booth-controls" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+          {!isModelsLoaded && (
+            <div style={{ padding: '1rem', background: 'rgba(245, 158, 11, 0.2)', borderRadius: '8px', color: '#f59e0b', fontSize: '0.85rem', marginBottom: '1rem' }}>
+              Sedang memuat AI (Filter Wajah & Latar Belakang)... Harap tunggu sebentar sebelum filter bisa digunakan.
+            </div>
+          )}
+          <button 
+            className="btn btn-primary" 
             onClick={startCountdown}
-            disabled={isCountdownRunning || users.length < 2}
-            style={{ padding: '0.85rem 2rem' }}
+            disabled={isCountdownRunning || activePhotoIndex >= 4}
+            style={{ padding: '1.25rem', fontSize: '1.2rem', display: 'flex', justifyContent: 'center' }}
           >
-            <Camera size={18} /> Mulai Foto
+            <Camera size={24} /> {isCountdownRunning ? 'Mengambil Foto...' : 'Mulai Foto (4 Pose)'}
           </button>
+
+          {/* AI Background Selection */}
+          <div className="selection-carousel-container" style={{ marginTop: '1.5rem' }}>
+            <span className="selection-title"><ImageIcon size={14} /> Virtual Background</span>
+            <div className="options-scroll">
+              <button
+                className={`option-btn ${selectedBg === 'bg-none' ? 'selected' : ''}`}
+                onClick={() => setSelectedBg('bg-none')}
+              >
+                Tanpa Latar
+              </button>
+              {BACKGROUNDS.filter(b => b.isImage).map((bg) => (
+                <button
+                  key={bg.id}
+                  className={`option-btn ${selectedBg === bg.id ? 'selected' : ''}`}
+                  onClick={() => setSelectedBg(bg.id)}
+                >
+                  {bg.name}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* AR Face Filter Selection */}
+          <div className="selection-carousel-container" style={{ marginTop: '1rem' }}>
+            <span className="selection-title"><Smile size={14} /> Sticker AR Wajah</span>
+            <div className="options-scroll">
+              {AR_FILTERS.map((filter) => (
+                <button
+                  key={filter.id}
+                  className={`option-btn ${selectedArFilter === filter.id ? 'selected' : ''}`}
+                  onClick={() => setSelectedArFilter(filter.id)}
+                >
+                  {filter.emoji && <span style={{marginRight: '5px'}}>{filter.emoji}</span>}
+                  {filter.name}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* Progress Tracker */}
@@ -371,43 +428,6 @@ export default function Booth({
               </div>
             );
           })}
-        </div>
-
-        {/* Adjustments (Filters / Frames selection) */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', marginTop: '0.5rem' }}>
-          {/* Filters selection */}
-          <div className="selection-carousel-container">
-            <span className="selection-title"><Wand2 size={12} /> Pilih Filter</span>
-            <div className="options-scroll">
-              {FILTERS.map((f) => (
-                <button
-                  key={f.id}
-                  className={`option-btn ${selectedFilter === f.class ? 'selected' : ''}`}
-                  onClick={() => handleFilterSelect(f.class)}
-                  disabled={isCountdownRunning}
-                >
-                  {f.name}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Frames selection */}
-          <div className="selection-carousel-container">
-            <span className="selection-title"><Frame size={12} /> Pilih Frame Strip</span>
-            <div className="options-scroll">
-              {FRAMES.map((fr) => (
-                <button
-                  key={fr.id}
-                  className={`option-btn ${selectedFrame === fr.class ? 'selected' : ''}`}
-                  onClick={() => handleFrameSelect(fr.class)}
-                  disabled={isCountdownRunning}
-                >
-                  {fr.name}
-                </button>
-              ))}
-            </div>
-          </div>
         </div>
       </div>
     </div>

@@ -36,11 +36,13 @@ export default function App() {
     sendFilterSelection,
     sendFrameSelection,
     resetSession,
-    startVideoCall
+    startVideoCall,
+    replaceLocalStream
   } = useWebRTC();
 
   const [appState, setAppState] = useState('LOBBY'); // LOBBY, SETUP, BOOTH, GALLERY
   const [capturedPhotos, setCapturedPhotos] = useState(null);
+  const [boothConfig, setBoothConfig] = useState({ layout: '1x4', frame: 'frame-classic' });
 
   // Automatically transition between Lobby and Setup when room code is set/cleared
   useEffect(() => {
@@ -52,11 +54,11 @@ export default function App() {
     }
   }, [roomCode]);
 
-  // Transition from Setup to Booth when BOTH participants are ready
+  // Transition from Setup to Booth when ALL participants are ready
   useEffect(() => {
     if (
       roomCode &&
-      users.length === 2 &&
+      users.length > 0 &&
       users.every((u) => u.ready) &&
       appState === 'SETUP'
     ) {
@@ -68,6 +70,7 @@ export default function App() {
   useEffect(() => {
     if (
       roomCode &&
+      roomCode !== 'SINGLE' &&
       users.length < 2 &&
       (appState === 'BOOTH' || appState === 'GALLERY')
     ) {
@@ -149,6 +152,8 @@ export default function App() {
             toggleReady={toggleReady}
             connectionState={connectionState}
             leaveRoom={leaveRoom}
+            boothConfig={boothConfig}
+            setBoothConfig={setBoothConfig}
           />
         )}
 
@@ -176,13 +181,15 @@ export default function App() {
             resetSession={resetSession}
             onPhotosComplete={handlePhotosComplete}
             startVideoCall={startVideoCall}
+            replaceLocalStream={replaceLocalStream}
           />
         )}
 
         {appState === 'GALLERY' && capturedPhotos && (
           <Gallery
-            photoData={capturedPhotos}
+            photoData={{ photoA: capturedPhotos.photoA, photoB: capturedPhotos.photoB }}
             resetSession={resetSession}
+            initialConfig={boothConfig}
           />
         )}
       </main>

@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Video, VideoOff, Copy, Check, Users, ShieldAlert, ArrowRight } from 'lucide-react';
+import { Video, VideoOff, Copy, Check, Users, ShieldAlert, ArrowRight, LayoutGrid, Frame } from 'lucide-react';
+import { LAYOUTS, FRAMES } from '../constants';
 
 export default function Setup({ 
   roomCode, 
@@ -9,7 +10,9 @@ export default function Setup({
   stopCamera, 
   toggleReady, 
   connectionState,
-  leaveRoom 
+  leaveRoom,
+  boothConfig,
+  setBoothConfig
 }) {
   const localVideoRef = useRef(null);
   const [copied, setCopied] = useState(false);
@@ -175,14 +178,55 @@ export default function Setup({
             )}
           </div>
 
-          <button 
-            className={`btn ${isReady ? 'btn-outline' : 'btn-primary'}`} 
-            onClick={handleReadyToggle}
-            style={{ width: '100%', height: '50px', fontSize: '1.1rem' }}
-            disabled={!cameraActive}
-          >
-            {isReady ? 'Batalkan Siap' : 'Saya Siap!'}
-          </button>
+          {/* Configuration Panel */}
+          <div className="setup-config-card glass" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', padding: '2rem' }}>
+            <h3>Pengaturan Strip Foto</h3>
+            
+            <div className="selection-carousel-container">
+              <span className="selection-title"><LayoutGrid size={12} /> Pilih Layout (Bentuk Foto)</span>
+              <div className="options-scroll">
+                {LAYOUTS.map((l) => (
+                  <button
+                    key={l.id}
+                    className={`option-btn ${boothConfig.layout === l.id ? 'selected' : ''}`}
+                    onClick={() => setBoothConfig(prev => ({ ...prev, layout: l.id }))}
+                  >
+                    {l.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="selection-carousel-container">
+              <span className="selection-title"><Frame size={12} /> Pilih Desain Frame</span>
+              <div className="options-scroll">
+                {FRAMES.map((fr) => (
+                  <button
+                    key={fr.id}
+                    className={`option-btn ${boothConfig.frame === fr.id ? 'selected' : ''}`}
+                    onClick={() => setBoothConfig(prev => ({ ...prev, frame: fr.id }))}
+                  >
+                    {fr.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ marginTop: 'auto', paddingTop: '2rem', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+              <button
+                className={`btn ${isReady ? 'btn-secondary' : 'btn-primary'}`}
+                style={{ width: '100%', fontSize: '1.1rem', padding: '1rem', display: 'flex', justifyContent: 'center' }}
+                onClick={handleReadyToggle}
+                disabled={!cameraActive || (users.length < 2 && roomCode !== 'SINGLE')}
+              >
+                {isReady ? (
+                  <><Check size={20} /> Siap! Menunggu Teman...</>
+                ) : (
+                  <><Check size={20} /> Saya Siap Memotret</>
+                )}
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>

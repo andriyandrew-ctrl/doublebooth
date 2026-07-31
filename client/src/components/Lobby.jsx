@@ -61,9 +61,22 @@ export default function Lobby({ createRoom, joinRoom }) {
       <div className="lobby-card glass" style={{ borderLeft: '4px solid var(--secondary)' }}>
         <h2 style={{ marginBottom: '1rem' }}>Mulai Sesi Foto</h2>
         
+        {/* Single Mode */}
+        <div style={{ marginBottom: '1.5rem' }}>
+          <p style={{ marginBottom: '0.5rem' }}>Ingin foto sendirian tanpa teman?</p>
+          <button className="btn btn-outline" style={{ width: '100%', borderColor: 'var(--primary)', color: 'var(--primary)' }} onClick={(e) => {
+            e.preventDefault();
+            createRoom('SINGLE_MODE');
+          }}>
+            <Sparkles size={18} /> Foto Sendirian (Single Mode)
+          </button>
+        </div>
+
+        <div className="divider">ATAU BERSAMA TEMAN</div>
+
         {/* Create room */}
         <form onSubmit={handleCreate}>
-          <p style={{ marginBottom: '1rem' }}>Buat room baru dan bagikan kodenya kepada teman Anda.</p>
+          <p style={{ marginBottom: '0.5rem' }}>Buat room baru dan bagikan kodenya kepada teman Anda.</p>
           <button type="submit" className="btn btn-primary" style={{ width: '100%' }}>
             <Plus size={18} /> Buat Room Baru
           </button>
