@@ -247,9 +247,11 @@ export default function useWebRTC() {
 
   const replaceLocalStream = useCallback((newStream) => {
     if (!newStream) return;
-    localStreamRef.current = newStream;
-    setLocalStream(newStream);
     
+    // We do NOT overwrite localStreamRef/setLocalStream here because localStream
+    // is the RAW webcam stream feeding MediaPipe. If we overwrite it, MediaPipe
+    // will try to process its own output canvas stream, leading to a black screen.
+
     // If peer connection exists, replace the track being sent
     if (peerConnectionRef.current) {
       const sender = peerConnectionRef.current.getSenders().find(s => s.track?.kind === 'video');

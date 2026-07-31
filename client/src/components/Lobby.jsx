@@ -72,7 +72,7 @@ export default function Lobby({ createRoom, joinRoom }) {
             <div style={{ flex: 1, height: '2px', background: 'var(--card-border)' }} />
           </div>
 
-          <div style={{ display: 'flex', gap: '0.75rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
             <input
               type="text"
               className="input-field input-field-large"
@@ -80,10 +80,10 @@ export default function Lobby({ createRoom, joinRoom }) {
               value={roomCodeInput}
               onChange={(e) => setRoomCodeInput(e.target.value.toUpperCase())}
               maxLength={6}
-              style={{ flex: 1, textTransform: 'uppercase', textAlign: 'center', fontWeight: '900', letterSpacing: '4px' }}
+              style={{ width: '100%', textTransform: 'uppercase', textAlign: 'center', fontWeight: '900', letterSpacing: '4px' }}
             />
-            <button className="btn btn-secondary" onClick={handleJoin} style={{ padding: '0 2.5rem', fontSize: '1.2rem' }}>
-              Join
+            <button className="btn btn-secondary" onClick={handleJoin} style={{ width: '100%', padding: '1.25rem', fontSize: '1.2rem' }}>
+              Join Room
             </button>
           </div>
         </div>

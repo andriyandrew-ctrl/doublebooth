@@ -5,7 +5,7 @@ import { BACKGROUNDS } from '../constants';
 // Pre-load background images
 const bgImages = {};
 BACKGROUNDS.forEach(bg => {
-  if (bg.isImage || bg.id.startsWith('bg-eiffel') || bg.id.startsWith('bg-cafe') || bg.id.startsWith('bg-beach')) {
+  if (bg.isImage) {
     const img = new Image();
     // Assuming virtual bg IDs correspond to filenames we just created
     img.src = `/assets/backgrounds/${bg.id}.jpg`;
@@ -96,12 +96,15 @@ export default function useMediaPipe(rawStream, selectedBgId, selectedArFilterId
     videoRef.current = video;
     canvasRef.current = canvas;
     
-    video.play().then(() => {
-      const stream = canvas.captureStream(30);
-      setProcessedStream(stream);
-      startProcessingLoop();
-    });
-
+    video.onloadedmetadata = () => {
+      video.play().then(() => {
+        const stream = canvas.captureStream(30);
+        setProcessedStream(stream);
+        startProcessingLoop();
+      }).catch(err => {
+        console.error("Failed to play hidden video:", err);
+      });
+    };
     return () => {
       video.pause();
       video.srcObject = null;
@@ -123,7 +126,7 @@ export default function useMediaPipe(rawStream, selectedBgId, selectedArFilterId
         const startTimeMs = performance.now();
 
         // 1. Draw Background (Virtual or Normal)
-        const isVirtualBg = selectedBgId.startsWith('bg-cafe') || selectedBgId.startsWith('bg-eiffel') || selectedBgId.startsWith('bg-beach');
+        const isVirtualBg = selectedBgId !== 'bg-none';
         let segmentedResult = null;
 
         if (isVirtualBg && segmenterRef.current) {

@@ -110,6 +110,12 @@ export default function Setup({
                 className={`theme-pack-card ${boothConfig.frame === frame.id ? 'selected' : ''}`}
                 onClick={() => setBoothConfig({ ...boothConfig, frame: frame.id })}
               >
+                <div className={`theme-preview-box ${frame.id}`}>
+                  {frame.id === 'frame-cute' && '❤️'}
+                  {frame.id === 'frame-retro' && '🎞️'}
+                  {frame.id === 'frame-classic' && '✨'}
+                  {frame.id === 'frame-minimalist' && '⬜'}
+                </div>
                 <div className="theme-pack-info">
                   <div className="theme-pack-title">{frame.name}</div>
                 </div>

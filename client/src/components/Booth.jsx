@@ -113,7 +113,9 @@ export default function Booth({
   // If both are ready, start countdown
   useEffect(() => {
     if (users.length > 0 && users.every(u => u.ready) && !isCountdownRunning && Object.keys(localPhotos).length === 0) {
-      startCountdown();
+      // Small delay to prevent immediate recursive triggers
+      const t = setTimeout(() => startCountdown(), 500);
+      return () => clearTimeout(t);
     }
   }, [users, isCountdownRunning, localPhotos, startCountdown]);
 
@@ -129,6 +131,8 @@ export default function Booth({
         setIsCountdownRunning(false);
         setActivePhotoIndex(-1);
         setStatusMessage('Foto selesai! Menggabungkan strip...');
+        setIsReady(false);
+        toggleReady(false);
         return;
       }
 
@@ -164,19 +168,28 @@ export default function Booth({
   // Capture current video frame in high-quality (mirrored for selfie ease)
   const captureLocalFrame = (index) => {
     const video = localVideoRef.current;
-    if (!video) return;
-
     const canvas = canvasRef.current;
+    if (!canvas) return;
     const ctx = canvas.getContext('2d');
 
-    const width = video.videoWidth || 640;
-    const height = video.videoHeight || 480;
+    // Default dimensions if video isn't loaded
+    const width = (video && video.videoWidth) ? video.videoWidth : 640;
+    const height = (video && video.videoHeight) ? video.videoHeight : 480;
     canvas.width = width;
     canvas.height = height;
 
     ctx.translate(width, 0);
     ctx.scale(-1, 1);
-    ctx.drawImage(video, 0, 0, width, height);
+    if (video && video.readyState >= 2) {
+      ctx.drawImage(video, 0, 0, width, height);
+    } else {
+      // Draw a black square fallback so the strip doesn't fail
+      ctx.fillStyle = '#111';
+      ctx.fillRect(0, 0, width, height);
+      ctx.fillStyle = '#fff';
+      ctx.font = '20px sans-serif';
+      ctx.fillText('Camera Error', 50, 50);
+    }
     ctx.setTransform(1, 0, 0, 1, 0, 0);
 
     const dataUrl = canvas.toDataURL('image/jpeg', 0.92);

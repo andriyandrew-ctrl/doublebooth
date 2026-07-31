@@ -404,6 +404,23 @@ body {
   color: white;
 }
 
+.theme-preview-box {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  margin-right: 1rem;
+  border: 2px solid var(--card-border);
+}
+
+.frame-classic { background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%); }
+.frame-minimalist { background: white; }
+.frame-retro { background: #d4c5b9; }
+.frame-cute { background: #ffb6c1; }
+
 /* Booth Layout */
 .booth-layout {
   display: flex;
