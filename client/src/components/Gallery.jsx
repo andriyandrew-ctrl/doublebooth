@@ -288,15 +288,18 @@ export default function Gallery({ photoData, resetSession, initialConfig }) {
           {/* Layout Selection */}
           <div className="selection-carousel-container" style={{ marginBottom: '1.25rem' }}>
             <span className="selection-title"><LayoutGrid size={12} /> Strip Layout</span>
-            <div className="options-scroll">
+            <div className="theme-pack-list" style={{ gridTemplateColumns: '1fr 1fr' }}>
               {LAYOUTS.map((l) => (
-                <button
+                <div
                   key={l.id}
-                  className={`option-btn ${selectedLayout === l.id ? 'selected' : ''}`}
+                  className={`theme-pack-card ${selectedLayout === l.id ? 'selected' : ''}`}
                   onClick={() => setSelectedLayout(l.id)}
+                  style={{ padding: '0.75rem' }}
                 >
-                  {l.name}
-                </button>
+                  <div className="theme-pack-info">
+                    <div className="theme-pack-title" style={{ fontSize: '1rem', textAlign: 'center' }}>{l.name}</div>
+                  </div>
+                </div>
               ))}
             </div>
           </div>
@@ -318,18 +321,27 @@ export default function Gallery({ photoData, resetSession, initialConfig }) {
             </div>
           </div>
 
-          {/* Frame Theme Selection */}
+          {/* Frame Selection */}
           <div className="selection-carousel-container" style={{ marginBottom: '1.25rem' }}>
-            <span className="selection-title"><Frame size={12} /> Frame Style</span>
-            <div className="options-scroll">
-              {FRAMES.map((fr) => (
-                <button
-                  key={fr.id}
-                  className={`option-btn ${selectedFrame === fr.id ? 'selected' : ''}`}
-                  onClick={() => setSelectedFrame(fr.id)}
+            <span className="selection-title"><Frame size={12} /> Theme Frame</span>
+            <div className="theme-pack-list" style={{ gridTemplateColumns: '1fr 1fr' }}>
+              {FRAMES.map((f) => (
+                <div
+                  key={f.id}
+                  className={`theme-pack-card ${selectedFrame === f.id ? 'selected' : ''}`}
+                  onClick={() => setSelectedFrame(f.id)}
+                  style={{ padding: '0.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center' }}
                 >
-                  {fr.name}
-                </button>
+                  <div className={`theme-preview-box ${f.id}`} style={{ width: '32px', height: '32px', marginRight: 0, marginBottom: '0.5rem', fontSize: '1rem' }}>
+                    {f.id === 'frame-cute' && '❤️'}
+                    {f.id === 'frame-retro' && '🎞️'}
+                    {f.id === 'frame-classic' && '✨'}
+                    {f.id === 'frame-minimalist' && '⬜'}
+                  </div>
+                  <div className="theme-pack-info" style={{ textAlign: 'center' }}>
+                    <div className="theme-pack-title" style={{ fontSize: '0.9rem' }}>{f.name}</div>
+                  </div>
+                </div>
               ))}
             </div>
           </div>

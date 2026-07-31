@@ -50,7 +50,7 @@ export default function useMediaPipe(rawStream, selectedBgId, selectedArFilterId
         segmenterRef.current = await ImageSegmenter.createFromOptions(vision, {
           baseOptions: {
             modelAssetPath: "https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_segmenter/float16/latest/selfie_segmenter.tflite",
-            delegate: "GPU"
+            delegate: "CPU" // Use CPU for max compatibility on all devices
           },
           runningMode: "VIDEO",
           outputCategoryMask: true
@@ -59,7 +59,7 @@ export default function useMediaPipe(rawStream, selectedBgId, selectedArFilterId
         faceLandmarkerRef.current = await FaceLandmarker.createFromOptions(vision, {
           baseOptions: {
             modelAssetPath: "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/latest/face_landmarker.task",
-            delegate: "GPU"
+            delegate: "CPU"
           },
           runningMode: "VIDEO",
           numFaces: 2
@@ -87,6 +87,9 @@ export default function useMediaPipe(rawStream, selectedBgId, selectedArFilterId
     video.playsInline = true;
     video.muted = true;
     video.srcObject = rawStream;
+    // Attach to DOM so iOS actually plays it
+    video.style.display = 'none';
+    document.body.appendChild(video);
     
     const canvas = document.createElement('canvas');
     // Request a 720p HD stream to match our WebRTC ideal constraints
@@ -108,6 +111,9 @@ export default function useMediaPipe(rawStream, selectedBgId, selectedArFilterId
     return () => {
       video.pause();
       video.srcObject = null;
+      if (document.body.contains(video)) {
+        document.body.removeChild(video);
+      }
       if (animationRef.current) cancelAnimationFrame(animationRef.current);
     };
   }, [rawStream, isModelsLoaded]); // re-run when stream or models change

@@ -232,9 +232,9 @@ export default function Booth({
         )}
 
         {users.length === 2 ? (
-          <div style={{ display: 'flex', width: '100%', height: '100%' }}>
+          <div className="dual-camera-container">
             {/* Local Video */}
-            <div style={{ flex: 1, position: 'relative', borderRight: '2px solid #222' }}>
+            <div style={{ flex: 1, position: 'relative', borderRight: '2px solid #222', minHeight: '300px' }}>
               <video ref={localVideoRef} className="video-feed" autoPlay playsInline muted />
               <div style={{ position: 'absolute', bottom: '1rem', left: '1rem', background: 'rgba(0,0,0,0.5)', padding: '0.25rem 0.75rem', borderRadius: '20px', color: 'white', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 You
@@ -242,7 +242,7 @@ export default function Booth({
               </div>
             </div>
             {/* Remote Video */}
-            <div style={{ flex: 1, position: 'relative' }}>
+            <div style={{ flex: 1, position: 'relative', minHeight: '300px' }}>
               {connectionState === 'connected' ? (
                 <video ref={remoteVideoRef} className="video-feed" autoPlay playsInline />
               ) : remotePreviewFrame ? (
