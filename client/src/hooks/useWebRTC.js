@@ -390,6 +390,11 @@ export default function useWebRTC() {
 
   // Session actions
   const startCountdown = useCallback(() => {
+    if (roomCode === 'SINGLE') {
+      setIsCountdownRunning(true);
+      setActivePhotoIndex(-1);
+      return;
+    }
     if (socketRef.current && roomCode) {
       socketRef.current.emit('start-countdown', { roomId: roomCode });
     }

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Camera, Plus, LogIn, Sparkles } from 'lucide-react';
+import { Camera, Plus, LogIn, Sparkles, User, Users } from 'lucide-react';
 
 export default function Lobby({ createRoom, joinRoom }) {
   const [nickname, setNickname] = useState('');
@@ -30,80 +30,68 @@ export default function Lobby({ createRoom, joinRoom }) {
     joinRoom(roomCodeInput.trim().toUpperCase(), nickname.trim());
   };
 
+  const handleSingleMode = (e) => {
+    e.preventDefault();
+    createRoom('SINGLE_MODE');
+  };
+
   return (
-    <div className="lobby-grid">
-      {/* Brand card */}
-      <div className="lobby-card glass" style={{ borderLeft: '4px solid var(--primary)' }}>
-        <div style={{ marginBottom: '1.5rem', display: 'inline-flex', padding: '0.75rem', borderRadius: '12px', background: 'rgba(255, 0, 127, 0.1)', color: 'var(--primary)', width: 'fit-content' }}>
-          <Camera size={32} />
-        </div>
-        <h2 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          Dual Booth <Sparkles size={20} style={{ color: 'var(--secondary)' }} />
-        </h2>
-        <p>
-          Bersenang-senang bersama teman dari device yang berbeda! Masuk ke room yang sama, pose bersama secara real-time, dan buat strip foto photobooth retro yang menakjubkan secara instan.
+    <div style={{ maxWidth: '900px', margin: '0 auto', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
+        <h1 style={{ fontSize: '3rem', fontWeight: 800, marginBottom: '1rem', letterSpacing: '-0.03em' }}>
+          Capture moments <br />together, instantly.
+        </h1>
+        <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem', maxWidth: '500px', margin: '0 auto' }}>
+          Enter a room with your friends, pose together in real-time, and get a beautiful photo strip in seconds.
         </p>
-        <div className="input-group">
-          <label className="input-label">Nama Panggilan Anda</label>
+      </div>
+
+      <div className="card" style={{ width: '100%', maxWidth: '500px', padding: '2rem', marginBottom: '2rem' }}>
+        <div className="input-group" style={{ marginBottom: '2rem' }}>
+          <label className="input-label" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <User size={18} /> YOUR NAME
+          </label>
           <input
             type="text"
-            className="input-field"
-            placeholder="Masukkan nama Anda (misal: Sarah)"
+            className="input-field input-field-large"
+            placeholder="Enter your nickname..."
             value={nickname}
             onChange={(e) => setNickname(e.target.value)}
             maxLength={12}
-            required
           />
         </div>
-      </div>
 
-      {/* Action card */}
-      <div className="lobby-card glass" style={{ borderLeft: '4px solid var(--secondary)' }}>
-        <h2 style={{ marginBottom: '1rem' }}>Mulai Sesi Foto</h2>
-        
-        {/* Single Mode */}
-        <div style={{ marginBottom: '1.5rem' }}>
-          <p style={{ marginBottom: '0.5rem' }}>Ingin foto sendirian tanpa teman?</p>
-          <button className="btn btn-outline" style={{ width: '100%', borderColor: 'var(--primary)', color: 'var(--primary)' }} onClick={(e) => {
-            e.preventDefault();
-            createRoom('SINGLE_MODE');
-          }}>
-            <Sparkles size={18} /> Foto Sendirian (Single Mode)
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <button className="btn btn-primary" onClick={handleCreate} style={{ width: '100%', padding: '1.25rem', fontSize: '1.2rem' }}>
+            <Plus size={20} /> Create New Session
           </button>
-        </div>
+          
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', margin: '1.5rem 0', color: 'var(--text-tertiary)' }}>
+            <div style={{ flex: 1, height: '2px', background: 'var(--card-border)' }} />
+            <span style={{ fontSize: '0.9rem', fontWeight: 800 }}>OR JOIN WITH CODE</span>
+            <div style={{ flex: 1, height: '2px', background: 'var(--card-border)' }} />
+          </div>
 
-        <div className="divider">ATAU BERSAMA TEMAN</div>
-
-        {/* Create room */}
-        <form onSubmit={handleCreate}>
-          <p style={{ marginBottom: '0.5rem' }}>Buat room baru dan bagikan kodenya kepada teman Anda.</p>
-          <button type="submit" className="btn btn-primary" style={{ width: '100%' }}>
-            <Plus size={18} /> Buat Room Baru
-          </button>
-        </form>
-
-        <div className="divider">ATAU</div>
-
-        {/* Join room */}
-        <form onSubmit={handleJoin}>
-          <p style={{ marginBottom: '1rem' }}>Punya kode room? Masukkan kodenya di bawah untuk bergabung.</p>
-          <div className="input-group">
+          <div style={{ display: 'flex', gap: '0.75rem' }}>
             <input
               type="text"
-              className="input-field"
-              placeholder="Masukkan 6-Digit Kode Room (misal: ABCDEF)"
+              className="input-field input-field-large"
+              placeholder="6-DIGIT CODE"
               value={roomCodeInput}
               onChange={(e) => setRoomCodeInput(e.target.value.toUpperCase())}
               maxLength={6}
-              style={{ textTransform: 'uppercase', textAlign: 'center', fontSize: '1.2rem', fontWeight: 'bold', letterSpacing: '2px' }}
-              required
+              style={{ flex: 1, textTransform: 'uppercase', textAlign: 'center', fontWeight: '900', letterSpacing: '4px' }}
             />
+            <button className="btn btn-secondary" onClick={handleJoin} style={{ padding: '0 2.5rem', fontSize: '1.2rem' }}>
+              Join
+            </button>
           </div>
-          <button type="submit" className="btn btn-secondary" style={{ width: '100%' }}>
-            <LogIn size={18} /> Bergabung ke Room
-          </button>
-        </form>
+        </div>
       </div>
+
+      <button className="btn btn-outline" onClick={handleSingleMode} style={{ padding: '1rem 2rem', color: 'var(--text-secondary)' }}>
+        <Sparkles size={16} /> I just want to take photos alone (Single Mode)
+      </button>
     </div>
   );
 }

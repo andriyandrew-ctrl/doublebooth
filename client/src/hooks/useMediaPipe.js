@@ -15,12 +15,14 @@ BACKGROUNDS.forEach(bg => {
 
 // Emojis for AR Filters
 export const AR_FILTERS = [
-  { id: 'none', name: 'Original', emoji: null },
-  { id: 'bunny', name: 'Bunny Ears', emoji: '🐰', offsetX: 0, offsetY: -80, size: 100 },
-  { id: 'crown', name: 'Queen Crown', emoji: '👑', offsetX: 0, offsetY: -70, size: 90 },
-  { id: 'glasses', name: 'Cool Glasses', emoji: '🕶️', offsetX: 0, offsetY: 0, size: 80, anchor: 'eyes' },
-  { id: 'cat', name: 'Cat Ears', emoji: '🐱', offsetX: 0, offsetY: -80, size: 90 },
-  { id: 'halo', name: 'Angel Halo', emoji: '👼', offsetX: 0, offsetY: -100, size: 100 }
+  { id: 'none', name: 'Tanpa Stiker', emoji: null },
+  { id: 'bunny', name: 'Kelinci', emoji: '🐰', offsetX: 0, offsetY: -80, size: 100 },
+  { id: 'sunglasses', name: 'Kacamata', emoji: '🕶️', offsetX: 0, offsetY: 0, size: 80, anchor: 'eyes' },
+  { id: 'crown', name: 'Mahkota', emoji: '👑', offsetX: 0, offsetY: -70, size: 90 },
+  { id: 'cowboy', name: 'Topi Koboi', emoji: '🤠', offsetX: 0, offsetY: -70, size: 100 },
+  { id: 'party', name: 'Topi Pesta', emoji: '🥳', offsetX: 0, offsetY: -70, size: 90 },
+  { id: 'mustache', name: 'Kumis', emoji: '🥸', offsetX: 0, offsetY: 40, size: 80, anchor: 'mouth' },
+  { id: 'cat', name: 'Kucing', emoji: '🐱', offsetX: 0, offsetY: -80, size: 90 }
 ];
 
 export default function useMediaPipe(rawStream, selectedBgId, selectedArFilterId) {
@@ -194,6 +196,10 @@ export default function useMediaPipe(rawStream, selectedBgId, selectedArFilterId
               
               if (arFilter.anchor === 'eyes') {
                 const point = landmarks[168]; // Between eyes
+                anchorX = point.x * canvas.width;
+                anchorY = point.y * canvas.height;
+              } else if (arFilter.anchor === 'mouth') {
+                const point = landmarks[14]; // Lower lip / Mouth center
                 anchorX = point.x * canvas.width;
                 anchorY = point.y * canvas.height;
               } else {

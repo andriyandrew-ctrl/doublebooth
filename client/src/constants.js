@@ -11,7 +11,22 @@ export const BACKGROUNDS = [
   { id: 'bg-grid', name: 'Retro Grid', color: '#faf5ff', isGrid: true },
   { id: 'bg-cafe', name: 'Cafe (Virtual)', isImage: true },
   { id: 'bg-eiffel', name: 'Eiffel Tower (Virtual)', isImage: true },
-  { id: 'bg-beach', name: 'Sunset Beach (Virtual)', isImage: true }
+  { id: 'bg-beach', name: 'Sunset Beach (Virtual)', isImage: true },
+  { id: 'bg-laundry', name: 'Laundry Room (Virtual)', isImage: true },
+  { id: 'bg-subway', name: 'Subway Train (Virtual)', isImage: true },
+  { id: 'bg-airplane', name: 'Airplane Window (Virtual)', isImage: true },
+  { id: 'bg-karaoke', name: 'Karaoke Neon (Virtual)', isImage: true }
+];
+
+export const ROOM_THEMES = [
+  { id: 'classic', name: 'Classic', desc: 'clean & bright', bgClass: 'bg-classic', preview: '⚪ 🔵' },
+  { id: 'vintage', name: 'Vintage', desc: '1930s photo automat', bgClass: 'bg-vintage' },
+  { id: 'meme', name: 'Meme', desc: 'recreate the classics', bgClass: 'bg-meme', preview: '😂' },
+  { id: 'laundry', name: 'Laundry', desc: 'late-night laundromat', bgClass: 'bg-laundry' },
+  { id: 'prison', name: 'Prison', desc: 'mugshot moment', bgClass: 'bg-prison' },
+  { id: 'subway', name: 'Subway', desc: 'last train home', bgClass: 'bg-subway' },
+  { id: 'airplane', name: 'Airplane', desc: 'window-seat views', bgClass: 'bg-airplane' },
+  { id: 'karaoke', name: 'Karaoke', desc: 'noraebang neon', bgClass: 'bg-karaoke' }
 ];
 
 export const POST_FILTERS = [

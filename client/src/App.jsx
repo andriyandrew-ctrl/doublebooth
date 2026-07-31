@@ -54,17 +54,11 @@ export default function App() {
     }
   }, [roomCode]);
 
-  // Transition from Setup to Booth when ALL participants are ready
-  useEffect(() => {
-    if (
-      roomCode &&
-      users.length > 0 &&
-      users.every((u) => u.ready) &&
-      appState === 'SETUP'
-    ) {
-      setAppState('BOOTH');
-    }
-  }, [users, roomCode, appState]);
+  // Setup is now a local wizard. When it completes, it calls setAppState('BOOTH').
+  // We no longer rely on users.every(u => u.ready) to enter Booth.
+  const handleSetupComplete = () => {
+    setAppState('BOOTH');
+  };
 
   // Handle peer leaving during active session
   useEffect(() => {
@@ -146,14 +140,11 @@ export default function App() {
           <Setup
             roomCode={roomCode}
             users={users}
-            localStream={localStream}
-            startCamera={startCamera}
-            stopCamera={stopCamera}
-            toggleReady={toggleReady}
             connectionState={connectionState}
             leaveRoom={leaveRoom}
             boothConfig={boothConfig}
             setBoothConfig={setBoothConfig}
+            onSetupComplete={handleSetupComplete}
           />
         )}
 
@@ -173,6 +164,8 @@ export default function App() {
             setFlashActive={setFlashActive}
             peerFilter={peerFilter}
             peerFrame={peerFrame}
+            startCamera={startCamera}
+            toggleReady={toggleReady}
             shareCapturedPhoto={shareCapturedPhoto}
             sendPreviewFrame={sendPreviewFrame}
             sendFilterSelection={sendFilterSelection}
