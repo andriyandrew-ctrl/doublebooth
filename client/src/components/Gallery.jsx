@@ -1,5 +1,18 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Download, Printer, RefreshCw, Wand2, Frame, Heart } from 'lucide-react';
+import { Download, Printer, RefreshCw, Wand2, Frame, Palette, LayoutGrid } from 'lucide-react';
+
+const LAYOUTS = [
+  { id: '1x4', name: 'Strip 1x4' },
+  { id: '2x2', name: 'Grid 2x2' }
+];
+
+const BACKGROUNDS = [
+  { id: 'bg-white', name: 'Classic White', color: '#ffffff' },
+  { id: 'bg-black', name: 'Dark Slate', color: '#0f172a' },
+  { id: 'bg-pink', name: 'Pastel Pink', color: '#ffe4e6' },
+  { id: 'bg-blue', name: 'Baby Blue', color: '#e0f2fe' },
+  { id: 'bg-grid', name: 'Retro Grid', color: '#faf5ff', isGrid: true }
+];
 
 const POST_FILTERS = [
   { id: 'normal', name: 'Original', filter: 'none' },
@@ -7,24 +20,22 @@ const POST_FILTERS = [
   { id: 'vintage-warm', name: 'Vintage Warm', filter: 'sepia(0.35) contrast(1.2) saturate(1.4) hue-rotate(-10deg) brightness(0.95)' },
   { id: 'retro-grayscale', name: 'Classic B&W', filter: 'grayscale(100%) contrast(1.3) brightness(0.9)' },
   { id: 'cyberpunk-cyan', name: 'Cyber Neon', filter: 'hue-rotate(180deg) saturate(2) contrast(1.1) brightness(0.95)' },
-  { id: 'y2k-acid', name: 'Y2K Acid', filter: 'hue-rotate(90deg) saturate(1.8) contrast(1.3) brightness(0.9)' },
-  { id: 'pastel-dream', name: 'Pastel Dream', filter: 'saturate(1.5) hue-rotate(130deg) brightness(1.1) contrast(0.9)' },
-  { id: 'tokyo-drift', name: 'Tokyo Cool', filter: 'hue-rotate(190deg) saturate(1.4) contrast(1.25) brightness(0.9)' },
-  { id: 'high-contrast-bw', name: 'Noir B&W', filter: 'grayscale(100%) contrast(1.9) brightness(0.8)' }
+  { id: 'pastel-dream', name: 'Pastel Dream', filter: 'saturate(1.5) hue-rotate(130deg) brightness(1.1) contrast(0.9)' }
 ];
 
 const FRAMES = [
-  { id: 'classic-white', name: 'Classic White', bg: '#ffffff', text: '#1f2937', font: 'Pacifico, cursive' },
-  { id: 'dark-retro', name: 'Dark Cyber', bg: '#0d0d15', text: '#00f0ff', font: 'Courier New, monospace' },
-  { id: 'pastel-pink', name: 'Pastel Hearts', bg: '#ffe4e6', text: '#e11d48', font: 'Pacifico, cursive' },
-  { id: 'cyberpunk', name: 'Cyber Pink', bg: '#1a0033', text: '#ff007f', font: 'Impact, sans-serif' },
-  { id: 'cute-stickers', name: 'Cute Lavender', bg: '#faf5ff', text: '#6b21a8', font: 'Outfit, sans-serif' }
+  { id: 'frame-minimal', name: 'Minimalist', text: '#1f2937', font: 'Outfit, sans-serif' },
+  { id: 'frame-classic', name: 'Classic Script', text: '#1f2937', font: 'Pacifico, cursive' },
+  { id: 'frame-retro', name: 'Retro Film', text: '#eab308', font: 'Courier New, monospace', isFilm: true },
+  { id: 'frame-cute', name: 'Cute Hearts', text: '#e11d48', font: 'Pacifico, cursive', isCute: true }
 ];
 
 export default function Gallery({ photoData, resetSession }) {
   const canvasRef = useRef(null);
+  const [selectedLayout, setSelectedLayout] = useState('1x4');
+  const [selectedBg, setSelectedBg] = useState('bg-white');
   const [selectedFilter, setSelectedFilter] = useState('none');
-  const [selectedFrame, setSelectedFrame] = useState('classic-white');
+  const [selectedFrame, setSelectedFrame] = useState('frame-classic');
   const [customText, setCustomText] = useState('Our Sweet Memories');
   const [imagesLoaded, setImagesLoaded] = useState(false);
 
@@ -81,190 +92,127 @@ export default function Gallery({ photoData, resetSession }) {
   const drawStrip = () => {
     const canvas = canvasRef.current;
     if (!canvas || !imagesLoaded) return;
-
     const ctx = canvas.getContext('2d');
+    
     const frameObj = FRAMES.find(f => f.id === selectedFrame) || FRAMES[0];
-
-    // Define Dimension System
-    const photoW = 400;
-    const photoH = 300;
-    const paddingX = 40;
-    const paddingY = 40;
-    const gapX = 20;
-    const gapY = 20;
+    const bgObj = BACKGROUNDS.find(b => b.id === selectedBg) || BACKGROUNDS[0];
+    
+    // Each person's face takes a 300x400 square (so stitched slot is 600x400)
+    const personW = 300;
+    const personH = 400;
+    const slotW = personW * 2; // 600
+    const slotH = personH;     // 400
+    
+    const padding = 40;
+    const gap = 20;
     const footerH = 150;
-
-    const canvasW = paddingX * 2 + photoW * 2 + gapX;
-    const canvasH = paddingY * 2 + photoH * 4 + gapY * 3 + footerH;
-
+    
+    let canvasW, canvasH;
+    
+    if (selectedLayout === '1x4') {
+      canvasW = padding * 2 + slotW;
+      canvasH = padding * 2 + (slotH * 4) + (gap * 3) + footerH;
+    } else {
+      // 2x2 grid
+      canvasW = padding * 2 + (slotW * 2) + gap;
+      canvasH = padding * 2 + (slotH * 2) + gap + footerH;
+    }
+    
     canvas.width = canvasW;
     canvas.height = canvasH;
-
-    // 1. Draw Background Frame
-    ctx.fillStyle = frameObj.bg;
+    
+    // 1. Draw Background
+    ctx.fillStyle = bgObj.color;
     ctx.fillRect(0, 0, canvasW, canvasH);
-
-    // Frame-specific decorations
-    if (selectedFrame === 'dark-retro') {
-      // 1. Draw filmstrip sprocket holes (horizontal cutouts)
-      ctx.fillStyle = '#0b0914'; // background color of web, makes holes look cut-out!
-      for (let sy = 15; sy < canvasH; sy += 45) {
-        // Left sprocket hole
-        ctx.fillRect(14, sy, 12, 20);
-        // Right sprocket hole
-        ctx.fillRect(canvasW - 26, sy, 12, 20);
-      }
-
-      // 2. Draw yellow frame numbers next to photos
-      ctx.fillStyle = '#eab308'; // film amber
-      ctx.font = 'bold 11px monospace';
-      for (let i = 0; i < 4; i++) {
-        const y = paddingY + i * (photoH + gapY);
-        ctx.fillText(`KODAK 400TX`, 12, y + 25);
-        ctx.fillText(`0${i+1}`, 15, y + 45);
-        ctx.fillText(`▶ ${i+1}A`, 12, y + 280);
-        
-        ctx.fillText(`KODAK 400TX`, canvasW - 25, y + 25);
-        ctx.fillText(`0${i+1}`, canvasW - 22, y + 45);
-        ctx.fillText(`▶ ${i+1}A`, canvasW - 25, y + 280);
-      }
-    } else if (selectedFrame === 'pastel-pink') {
-      // Draw actual heart vectors on margins
-      ctx.fillStyle = '#f43f5e';
-      const drawHeart = (x, y, size) => {
-        ctx.beginPath();
-        ctx.moveTo(x, y + size / 4);
-        ctx.quadraticCurveTo(x, y, x + size / 2, y);
-        ctx.quadraticCurveTo(x + size, y, x + size, y + size / 3);
-        ctx.quadraticCurveTo(x + size, y + size * 2/3, x + size / 2, y + size);
-        ctx.quadraticCurveTo(x, y + size * 2/3, x, y + size / 3);
-        ctx.quadraticCurveTo(x, y, x, y + size / 4);
-        ctx.closePath();
-        ctx.fill();
-      };
-      
-      drawHeart(12, 20, 20);
-      drawHeart(canvasW - 32, 50, 16);
-      drawHeart(10, 320, 18);
-      drawHeart(canvasW - 28, 480, 22);
-      drawHeart(14, 750, 24);
-      drawHeart(canvasW - 30, 950, 18);
-      drawHeart(15, canvasH - footerH, 20);
-    } else if (selectedFrame === 'cute-stickers') {
-      // Draw 4-point sparkle star vectors on margins
-      const drawSparkle = (x, y, size) => {
-        ctx.beginPath();
-        ctx.moveTo(x, y - size);
-        ctx.quadraticCurveTo(x, y, x + size, y);
-        ctx.quadraticCurveTo(x, y, x, y + size);
-        ctx.quadraticCurveTo(x, y, x - size, y);
-        ctx.quadraticCurveTo(x, y, x, y - size);
-        ctx.closePath();
-        ctx.fillStyle = '#f5f3ff';
-        ctx.fill();
-        ctx.strokeStyle = '#a855f7';
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
-      };
-      
-      drawSparkle(15, 60, 10);
-      drawSparkle(canvasW - 25, 120, 8);
-      drawSparkle(15, 450, 12);
-      drawSparkle(canvasW - 22, 600, 9);
-      drawSparkle(18, 900, 14);
-      drawSparkle(canvasW - 25, 1100, 10);
-    } else if (selectedFrame === 'cyberpunk') {
-      // Draw warning stripes on left/right borders
-      ctx.fillStyle = '#facc15'; // cyber yellow
-      ctx.fillRect(0, 0, 10, canvasH);
-      ctx.fillRect(canvasW - 10, 0, 10, canvasH);
-
-      // Draw cyber black warning slashes
-      ctx.fillStyle = '#000000';
-      for (let sy = 0; sy < canvasH; sy += 30) {
-        ctx.beginPath();
-        ctx.moveTo(0, sy);
-        ctx.lineTo(10, sy + 10);
-        ctx.lineTo(10, sy + 20);
-        ctx.lineTo(0, sy + 10);
-        ctx.closePath();
-        ctx.fill();
-        
-        ctx.beginPath();
-        ctx.moveTo(canvasW - 10, sy);
-        ctx.lineTo(canvasW, sy + 10);
-        ctx.lineTo(canvasW, sy + 20);
-        ctx.lineTo(canvasW - 10, sy + 10);
-        ctx.closePath();
-        ctx.fill();
-      }
-
-      // Draw retro grid pattern in background
-      ctx.strokeStyle = 'rgba(255, 0, 127, 0.12)';
-      ctx.lineWidth = 1.5;
+    
+    if (bgObj.isGrid) {
+      ctx.strokeStyle = 'rgba(100, 100, 150, 0.1)';
+      ctx.lineWidth = 2;
       for (let y = 10; y < canvasH; y += 40) {
-        ctx.beginPath(); ctx.moveTo(10, y); ctx.lineTo(canvasW - 10, y); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvasW, y); ctx.stroke();
+      }
+      for (let x = 10; x < canvasW; x += 40) {
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvasH); ctx.stroke();
       }
     }
-
-    // 2. Draw 4 Pose Rows (Photo A & Photo B side-by-side)
-    const { photoA: photoAImgs, photoB: photoBImgs } = imageElementsRef.current;
-
-    for (let i = 0; i < 4; i++) {
-      const y = paddingY + i * (photoH + gapY);
-
-      // Photo A (Left) - Host
-      const xA = paddingX;
-      // Photo B (Right) - Peer
-      const xB = paddingX + photoW + gapX;
-
-      // Draw Photo A
-      if (photoAImgs[i]) {
-        ctx.save();
-        ctx.filter = selectedFilter;
-        ctx.drawImage(photoAImgs[i], xA, y, photoW, photoH);
-        ctx.restore();
-        
-        // Draw frame border
-        ctx.strokeStyle = frameObj.text;
-        ctx.lineWidth = 3;
-        ctx.strokeRect(xA, y, photoW, photoH);
-      }
-
-      // Draw Photo B
-      if (photoBImgs[i]) {
-        ctx.save();
-        ctx.filter = selectedFilter;
-        ctx.drawImage(photoBImgs[i], xB, y, photoW, photoH);
-        ctx.restore();
-
-        // Draw frame border
-        ctx.strokeStyle = frameObj.text;
-        ctx.lineWidth = 3;
-        ctx.strokeRect(xB, y, photoW, photoH);
-      }
+    
+    if (frameObj.isCute) {
+      ctx.fillStyle = 'rgba(244, 63, 94, 0.5)';
+      ctx.font = '30px Arial';
+      ctx.fillText('💖', 40, 40);
+      ctx.fillText('✨', canvasW - 40, 60);
+      ctx.fillText('🌸', 30, canvasH - footerH - 20);
     }
 
-    // 3. Draw Footer Text
+    if (frameObj.isFilm) {
+       ctx.fillStyle = '#0f172a'; // black edge holes
+       for (let sy = 20; sy < canvasH; sy += 60) {
+         ctx.fillRect(10, sy, 15, 30);
+         ctx.fillRect(canvasW - 25, sy, 15, 30);
+       }
+    }
+    
+    // 2. Draw Photos (Photo A left, Photo B right, stitched in 1 slot)
+    const { photoA, photoB } = imageElementsRef.current;
+    
+    const drawSlot = (index, x, y) => {
+      const drawCroppedPerson = (img, destX, destY) => {
+        if (!img) return;
+        ctx.save();
+        ctx.filter = selectedFilter;
+        // Crop center 3:4 portrait from whatever aspect ratio the camera gave us
+        const srcW = img.height * 0.75;
+        const srcX = Math.max(0, (img.width - srcW) / 2);
+        ctx.drawImage(img, srcX, 0, srcW, img.height, destX, destY, personW, personH);
+        ctx.restore();
+      };
+
+      // Draw Host (Left)
+      drawCroppedPerson(photoA[index], x, y);
+      
+      // Draw Guest (Right)
+      drawCroppedPerson(photoB[index], x + personW, y);
+
+      // Draw frame border around the slot
+      ctx.strokeStyle = frameObj.text;
+      ctx.lineWidth = 4;
+      ctx.strokeRect(x, y, slotW, slotH);
+      
+      // Draw middle divider line
+      ctx.beginPath();
+      ctx.moveTo(x + personW, y);
+      ctx.lineTo(x + personW, y + slotH);
+      ctx.stroke();
+    };
+    
+    if (selectedLayout === '1x4') {
+      for (let i = 0; i < 4; i++) {
+        drawSlot(i, padding, padding + i * (slotH + gap));
+      }
+    } else { // 2x2
+      drawSlot(0, padding, padding);
+      drawSlot(1, padding + slotW + gap, padding);
+      drawSlot(2, padding, padding + slotH + gap);
+      drawSlot(3, padding + slotW + gap, padding + slotH + gap);
+    }
+    
+    // 3. Footer
     ctx.fillStyle = frameObj.text;
     ctx.textAlign = 'center';
-
-    // Main text
-    ctx.font = `bold 32px ${frameObj.font.split(',')[0]}`;
-    ctx.fillText(customText, canvasW / 2, canvasH - footerH + 60);
-
-    // Subtext (Date)
+    ctx.font = `bold 40px ${frameObj.font.split(',')[0]}`;
+    ctx.fillText(customText, canvasW / 2, canvasH - footerH + 70);
+    
     const dateStr = new Date().toLocaleDateString('id-ID', {
       weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
     });
-    ctx.font = '20px Outfit, sans-serif';
-    ctx.fillText(dateStr, canvasW / 2, canvasH - footerH + 110);
+    ctx.font = '24px Outfit, sans-serif';
+    ctx.fillText(dateStr, canvasW / 2, canvasH - footerH + 120);
   };
 
-  // Re-draw whenever filter, frame, text, or images status change
+  // Re-draw whenever filter, frame, bg, layout, text, or images change
   useEffect(() => {
     drawStrip();
-  }, [selectedFilter, selectedFrame, customText, imagesLoaded]);
+  }, [selectedFilter, selectedFrame, selectedBg, selectedLayout, customText, imagesLoaded]);
 
   const handleDownload = () => {
     const canvas = canvasRef.current;
@@ -365,25 +313,42 @@ export default function Gallery({ photoData, resetSession }) {
             />
           </div>
 
-          {/* Post Filter selection */}
+          {/* Layout Selection */}
           <div className="selection-carousel-container" style={{ marginBottom: '1.25rem' }}>
-            <span className="selection-title"><Wand2 size={12} /> Filter Foto</span>
+            <span className="selection-title"><LayoutGrid size={12} /> Strip Layout</span>
             <div className="options-scroll">
-              {POST_FILTERS.map((f) => (
+              {LAYOUTS.map((l) => (
                 <button
-                  key={f.id}
-                  className={`option-btn ${selectedFilter === f.filter ? 'selected' : ''}`}
-                  onClick={() => setSelectedFilter(f.filter)}
+                  key={l.id}
+                  className={`option-btn ${selectedLayout === l.id ? 'selected' : ''}`}
+                  onClick={() => setSelectedLayout(l.id)}
                 >
-                  {f.name}
+                  {l.name}
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Post Frame selection */}
-          <div className="selection-carousel-container" style={{ marginBottom: '1.5rem' }}>
-            <span className="selection-title"><Frame size={12} /> Desain Frame</span>
+          {/* Background Selection */}
+          <div className="selection-carousel-container" style={{ marginBottom: '1.25rem' }}>
+            <span className="selection-title"><Palette size={12} /> Background Colors</span>
+            <div className="options-scroll">
+              {BACKGROUNDS.map((b) => (
+                <button
+                  key={b.id}
+                  className={`option-btn ${selectedBg === b.id ? 'selected' : ''}`}
+                  onClick={() => setSelectedBg(b.id)}
+                  style={{ borderLeft: `4px solid ${b.color}` }}
+                >
+                  {b.name}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Frame Theme Selection */}
+          <div className="selection-carousel-container" style={{ marginBottom: '1.25rem' }}>
+            <span className="selection-title"><Frame size={12} /> Frame Style</span>
             <div className="options-scroll">
               {FRAMES.map((fr) => (
                 <button
@@ -392,6 +357,22 @@ export default function Gallery({ photoData, resetSession }) {
                   onClick={() => setSelectedFrame(fr.id)}
                 >
                   {fr.name}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Post Filter selection */}
+          <div className="selection-carousel-container" style={{ marginBottom: '1.5rem' }}>
+            <span className="selection-title"><Wand2 size={12} /> Camera Filters</span>
+            <div className="options-scroll">
+              {POST_FILTERS.map((f) => (
+                <button
+                  key={f.id}
+                  className={`option-btn ${selectedFilter === f.filter ? 'selected' : ''}`}
+                  onClick={() => setSelectedFilter(f.filter)}
+                >
+                  {f.name}
                 </button>
               ))}
             </div>
