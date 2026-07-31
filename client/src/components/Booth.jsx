@@ -231,6 +231,14 @@ export default function Booth({
           </div>
         )}
 
+        {!isModelsLoaded && localStream && (
+          <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.8)', zIndex: 10, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
+            <div className="spinner" style={{ width: '40px', height: '40px', border: '4px solid rgba(255,255,255,0.3)', borderTopColor: 'white', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+            <div style={{ marginTop: '1rem', fontWeight: 600, letterSpacing: '1px' }}>Memuat Mesin AI...</div>
+            <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+          </div>
+        )}
+
         {users.length === 2 ? (
           <div className="dual-camera-container">
             {/* Local Video */}

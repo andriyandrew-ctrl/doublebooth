@@ -13,17 +13,27 @@ BACKGROUNDS.forEach(bg => {
   }
 });
 
-// Emojis for AR Filters
+// AR Filters using Twemoji SVGs for consistent, high-quality rendering
 export const AR_FILTERS = [
   { id: 'none', name: 'Tanpa Stiker', emoji: null },
-  { id: 'bunny', name: 'Kelinci', emoji: '🐰', offsetX: 0, offsetY: -80, size: 100 },
-  { id: 'sunglasses', name: 'Kacamata', emoji: '🕶️', offsetX: 0, offsetY: 0, size: 80, anchor: 'eyes' },
-  { id: 'crown', name: 'Mahkota', emoji: '👑', offsetX: 0, offsetY: -70, size: 90 },
-  { id: 'cowboy', name: 'Topi Koboi', emoji: '🤠', offsetX: 0, offsetY: -70, size: 100 },
-  { id: 'party', name: 'Topi Pesta', emoji: '🥳', offsetX: 0, offsetY: -70, size: 90 },
-  { id: 'mustache', name: 'Kumis', emoji: '🥸', offsetX: 0, offsetY: 40, size: 80, anchor: 'mouth' },
-  { id: 'cat', name: 'Kucing', emoji: '🐱', offsetX: 0, offsetY: -80, size: 90 }
+  { id: 'bunny', name: 'Kelinci', src: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f430.svg', emoji: '🐰', offsetX: 0, offsetY: -100, size: 140 },
+  { id: 'sunglasses', name: 'Kacamata', src: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f576.svg', emoji: '🕶️', offsetX: 0, offsetY: 0, size: 120, anchor: 'eyes' },
+  { id: 'crown', name: 'Mahkota', src: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f451.svg', emoji: '👑', offsetX: 0, offsetY: -90, size: 120 },
+  { id: 'cowboy', name: 'Topi Koboi', src: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f920.svg', emoji: '🤠', offsetX: 0, offsetY: -90, size: 140 },
+  { id: 'party', name: 'Topi Pesta', src: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f973.svg', emoji: '🥳', offsetX: 0, offsetY: -90, size: 120 },
+  { id: 'mustache', name: 'Kumis', src: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f9d4.svg', emoji: '🥸', offsetX: 0, offsetY: 0, size: 100, anchor: 'mouth' },
+  { id: 'cat', name: 'Kucing', src: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f431.svg', emoji: '🐱', offsetX: 0, offsetY: -100, size: 130 }
 ];
+
+// Pre-load AR images
+const arImages = {};
+AR_FILTERS.forEach(f => {
+  if (f.src) {
+    const img = new Image();
+    img.src = f.src;
+    arImages[f.id] = img;
+  }
+});
 
 export default function useMediaPipe(rawStream, selectedBgId, selectedArFilterId) {
   const canvasRef = useRef(null);
@@ -192,13 +202,12 @@ export default function useMediaPipe(rawStream, selectedBgId, selectedArFilterId
 
         // 2. Draw AR Face Filters
         const arFilter = AR_FILTERS.find(f => f.id === selectedArFilterId);
-        if (arFilter && arFilter.emoji && faceLandmarkerRef.current) {
+        if (arFilter && arFilter.src && faceLandmarkerRef.current) {
           const faceResult = faceLandmarkerRef.current.detectForVideo(video, startTimeMs);
+          const arImg = arImages[arFilter.id];
           
-          if (faceResult && faceResult.faceLandmarks) {
+          if (faceResult && faceResult.faceLandmarks && arImg && arImg.complete) {
             ctx.save();
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
             
             for (const landmarks of faceResult.faceLandmarks) {
               let anchorX, anchorY;
@@ -221,11 +230,31 @@ export default function useMediaPipe(rawStream, selectedBgId, selectedArFilterId
               const rightCheek = landmarks[454];
               const faceWidth = Math.abs((rightCheek.x - leftCheek.x) * canvas.width);
               
+              // Calculate Face Roll (Tilt)
+              const angle = Math.atan2(rightCheek.y - leftCheek.y, rightCheek.x - leftCheek.x);
+              
               const scaleRatio = faceWidth / 200;
               const finalSize = arFilter.size * scaleRatio;
               
-              ctx.font = `${finalSize}px Arial`;
-              ctx.fillText(arFilter.emoji, anchorX + (arFilter.offsetX * scaleRatio), anchorY + (arFilter.offsetY * scaleRatio));
+              // Draw the AR Image with Transform
+              ctx.translate(anchorX, anchorY);
+              ctx.rotate(angle);
+              
+              // Offset is applied after rotation so it stays relative to the face axis
+              const finalOffsetX = arFilter.offsetX * scaleRatio;
+              const finalOffsetY = arFilter.offsetY * scaleRatio;
+              
+              ctx.drawImage(
+                arImg, 
+                finalOffsetX - (finalSize/2), 
+                finalOffsetY - (finalSize/2), 
+                finalSize, 
+                finalSize
+              );
+              
+              // Reset transform for next face
+              ctx.rotate(-angle);
+              ctx.translate(-anchorX, -anchorY);
             }
             ctx.restore();
           }

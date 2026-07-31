@@ -69,15 +69,18 @@ export default function Gallery({ photoData, resetSession, initialConfig }) {
     const frameObj = FRAMES.find(f => f.id === selectedFrame) || FRAMES[0];
     const bgObj = BACKGROUNDS.find(b => b.id === selectedBg) || BACKGROUNDS[0];
     
-    // Each person's face takes a 300x400 square (so stitched slot is 600x400)
-    const personW = 300;
-    const personH = 400;
-    const slotW = personW * 2; // 600
-    const slotH = personH;     // 400
+    // High-Res multiplier (Retina Display Quality)
+    const multiplier = 2;
     
-    const padding = 40;
-    const gap = 20;
-    const footerH = 150;
+    // Each person's face takes a square (so stitched slot is 1200x800)
+    const personW = 300 * multiplier;
+    const personH = 400 * multiplier;
+    const slotW = personW * 2;
+    const slotH = personH;
+    
+    const padding = 40 * multiplier;
+    const gap = 20 * multiplier;
+    const footerH = 150 * multiplier;
     
     let canvasW, canvasH;
     
@@ -99,28 +102,28 @@ export default function Gallery({ photoData, resetSession, initialConfig }) {
     
     if (bgObj.isGrid) {
       ctx.strokeStyle = 'rgba(100, 100, 150, 0.1)';
-      ctx.lineWidth = 2;
-      for (let y = 10; y < canvasH; y += 40) {
+      ctx.lineWidth = 2 * multiplier;
+      for (let y = 10 * multiplier; y < canvasH; y += 40 * multiplier) {
         ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvasW, y); ctx.stroke();
       }
-      for (let x = 10; x < canvasW; x += 40) {
+      for (let x = 10 * multiplier; x < canvasW; x += 40 * multiplier) {
         ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvasH); ctx.stroke();
       }
     }
     
     if (frameObj.isCute) {
       ctx.fillStyle = 'rgba(244, 63, 94, 0.5)';
-      ctx.font = '30px Arial';
-      ctx.fillText('💖', 40, 40);
-      ctx.fillText('✨', canvasW - 40, 60);
-      ctx.fillText('🌸', 30, canvasH - footerH - 20);
+      ctx.font = `${30 * multiplier}px Arial`;
+      ctx.fillText('💖', 40 * multiplier, 40 * multiplier);
+      ctx.fillText('✨', canvasW - 40 * multiplier, 60 * multiplier);
+      ctx.fillText('🌸', 30 * multiplier, canvasH - footerH - 20 * multiplier);
     }
 
     if (frameObj.isFilm) {
        ctx.fillStyle = '#0f172a'; // black edge holes
-       for (let sy = 20; sy < canvasH; sy += 60) {
-         ctx.fillRect(10, sy, 15, 30);
-         ctx.fillRect(canvasW - 25, sy, 15, 30);
+       for (let sy = 20 * multiplier; sy < canvasH; sy += 60 * multiplier) {
+         ctx.fillRect(10 * multiplier, sy, 15 * multiplier, 30 * multiplier);
+         ctx.fillRect(canvasW - 25 * multiplier, sy, 15 * multiplier, 30 * multiplier);
        }
     }
     
@@ -145,9 +148,9 @@ export default function Gallery({ photoData, resetSession, initialConfig }) {
       // Draw Guest (Right)
       drawCroppedPerson(photoB[index], x + personW, y);
 
-      // Draw frame border around the slot
-      ctx.strokeStyle = frameObj.text;
-      ctx.lineWidth = 4;
+      // Draw Border
+      ctx.strokeStyle = frameObj.border;
+      ctx.lineWidth = 4 * multiplier;
       ctx.strokeRect(x, y, slotW, slotH);
       
       // Draw middle divider line
@@ -171,14 +174,14 @@ export default function Gallery({ photoData, resetSession, initialConfig }) {
     // 3. Footer
     ctx.fillStyle = frameObj.text;
     ctx.textAlign = 'center';
-    ctx.font = `bold 40px ${frameObj.font.split(',')[0]}`;
-    ctx.fillText(customText, canvasW / 2, canvasH - footerH + 70);
+    ctx.font = `bold ${40 * multiplier}px ${frameObj.font.split(',')[0]}`;
+    ctx.fillText(customText, canvasW / 2, canvasH - footerH + (70 * multiplier));
     
     const dateStr = new Date().toLocaleDateString('id-ID', {
       weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
     });
-    ctx.font = '24px Outfit, sans-serif';
-    ctx.fillText(dateStr, canvasW / 2, canvasH - footerH + 120);
+    ctx.font = `${24 * multiplier}px Outfit, sans-serif`;
+    ctx.fillText(dateStr, canvasW / 2, canvasH - footerH + (120 * multiplier));
   };
 
   // Re-draw whenever filter, frame, bg, layout, text, or images change
